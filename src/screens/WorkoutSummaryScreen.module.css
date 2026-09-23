@@ -1,0 +1,80 @@
+.name {
+  margin-top: calc(-1 * var(--space-3));
+  color: var(--text-muted);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.stats > div {
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.stats dt {
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+}
+
+.stats dd {
+  margin: 0;
+  font-size: var(--font-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats small {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.records {
+  padding: var(--space-4);
+  border-radius: var(--radius);
+  background: var(--success-bg);
+}
+
+.records h2 {
+  font-size: var(--font-md);
+  color: var(--success);
+}
+
+.records ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+.exercises {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.exercise {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.exercise:last-child {
+  border-bottom: none;
+}
+
+.exerciseName {
+  font-weight: 700;
+}
+
+.exerciseSets {
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+}

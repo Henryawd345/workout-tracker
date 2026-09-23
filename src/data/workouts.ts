@@ -174,6 +174,15 @@ export async function listCompletedWorkouts(): Promise<Workout[]> {
   return workouts.reverse()
 }
 
+/** Number of finished workouts that started at or after `sinceIso` (e.g. "this week"). */
+export async function countCompletedSince(sinceIso: string): Promise<number> {
+  return db.workouts
+    .where('startedAt')
+    .aboveOrEqual(sinceIso)
+    .filter((w) => w.status === 'completed')
+    .count()
+}
+
 /** When each routine was last finished: routineId → startedAt of the newest workout from it. */
 export async function getRoutinesLastPerformed(): Promise<Record<ID, string>> {
   const last: Record<ID, string> = {}

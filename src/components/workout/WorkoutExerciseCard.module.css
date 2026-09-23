@@ -1,0 +1,109 @@
+.card {
+  padding: var(--space-2) var(--space-3) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  list-style: none;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  padding-top: var(--space-2);
+}
+
+.name {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.meta {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+}
+
+.cue {
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  font-style: italic;
+}
+
+.sessionNote {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: var(--font-sm);
+  text-align: left;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: var(--tap) minmax(0, 1fr) 74px 58px var(--tap);
+  gap: 5px;
+  margin-top: var(--space-3);
+  padding: 0 2px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.columns[data-tracking='reps_only'] {
+  grid-template-columns: var(--tap) minmax(0, 1fr) 76px var(--tap);
+}
+
+.columns[data-tracking='duration'] {
+  grid-template-columns: var(--tap) minmax(0, 1fr) 96px var(--tap);
+}
+
+.columns > :nth-child(1),
+.columns > :nth-child(n + 3) {
+  text-align: center;
+}
+
+.sets {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: var(--space-1) 0 0;
+  padding: 0;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.rest {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+}
+
+.rest select {
+  min-height: var(--tap);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-weight: 600;
+}

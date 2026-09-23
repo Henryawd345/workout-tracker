@@ -68,6 +68,42 @@ describe('useDebouncedSave', () => {
     expect(save).not.toHaveBeenCalled()
   })
 
+  it('flush waits for every save already running', async () => {
+    vi.useRealTimers()
+    const order: string[] = []
+    let release!: () => void
+    const save = vi.fn(async (v: string) => {
+      order.push(`start ${v}`)
+      if (v === 'a') await new Promise<void>((r) => (release = r))
+      order.push(`end ${v}`)
+    })
+    const { result } = renderHook(() => useDebouncedSave(save, 500))
+    act(() => result.current.schedule('a'))
+    let first!: Promise<void>
+    act(() => {
+      first = result.current.flush() // 'a' starts and blocks
+    })
+    let second!: Promise<void>
+    act(() => {
+      second = result.current.flush() // nothing pending, but must still wait for 'a'
+    })
+    let secondDone = false
+    void second.then(() => (secondDone = true))
+    await Promise.resolve()
+    expect(secondDone).toBe(false)
+
+    act(() => result.current.schedule('b'))
+    act(() => {
+      void result.current.flush()
+    })
+    release()
+    await first
+    await second
+    await result.current.flush()
+    // 'b' starts at once (IndexedDB keeps the order); flush still waited for 'a'
+    expect(order).toEqual(['start a', 'start b', 'end b', 'end a'])
+  })
+
   it('uses the latest save function', () => {
     const first = vi.fn(async () => {})
     const second = vi.fn(async () => {})

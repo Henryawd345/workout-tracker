@@ -1,0 +1,81 @@
+.screen {
+  min-height: 100%;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-1);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.headerText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  width: 100%;
+  min-height: 34px;
+  padding: 0 var(--space-1);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  font-size: var(--font-lg);
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+
+.name:focus {
+  border-color: var(--border);
+  background: var(--bg);
+}
+
+.clock {
+  padding: 0 var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 640px;
+  margin: 0 auto;
+  /* Room at the bottom so the last set isn't hidden behind the toast or rest timer. */
+  padding: var(--space-3) var(--space-3) calc(120px + var(--safe-bottom));
+}
+
+.exercises {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+}
+
+.note {
+  padding: var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: var(--font-sm);
+  text-align: left;
+}
+
+.error {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+  font-weight: 600;
+}

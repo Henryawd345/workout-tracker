@@ -23,25 +23,35 @@ interface SuggestInput {
   plannedSets: PlannedSet[]
   /** Unit the new set is logged in — used when the source has no unit of its own. */
   unit: WeightUnit
+  /** Sets above this one in the current workout (same exercise card), in order. */
+  setsAbove?: SetEntry[]
+}
+
+function fromSet(s: SetEntry, unit: WeightUnit): Suggestion {
+  return {
+    weight: s.weight,
+    weightUnit: s.weight === null ? unit : s.weightUnit,
+    reps: s.reps,
+    durationSec: s.durationSec,
+  }
 }
 
 /**
  * Suggestion for set n:
  * 1. set n of the previous session, else its last set;
- * 2. otherwise the routine's planned set n, else its last planned set;
- * 3. otherwise nothing.
+ * 2. otherwise the nearest set above in this workout that has values (so after typing set 1
+ *    of a new exercise, sets 2, 3… are one tap each);
+ * 3. otherwise the routine's planned set n, else its last planned set;
+ * 4. otherwise nothing.
  * Weights keep their original unit (see Suggestion).
  */
-export function suggestSet({ index, previousSets, plannedSets, unit }: SuggestInput): Suggestion {
+export function suggestSet({ index, previousSets, plannedSets, unit, setsAbove = [] }: SuggestInput): Suggestion {
   const prev = previousSets[index] ?? previousSets.at(-1)
-  if (prev) {
-    return {
-      weight: prev.weight,
-      weightUnit: prev.weight === null ? unit : prev.weightUnit,
-      reps: prev.reps,
-      durationSec: prev.durationSec,
-    }
-  }
+  if (prev) return fromSet(prev, unit)
+
+  const above = [...setsAbove].reverse().find((s) => s.weight !== null || s.reps !== null || s.durationSec !== null)
+  if (above) return fromSet(above, unit)
+
   const plan = plannedSets[index] ?? plannedSets.at(-1)
   if (plan) {
     const hasWeight = plan.targetWeight !== undefined

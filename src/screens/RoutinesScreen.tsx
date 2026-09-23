@@ -9,11 +9,13 @@ import { IconButton } from '../components/IconButton.tsx'
 import { MoreIcon, PlusIcon } from '../components/icons.tsx'
 import { EmptyState, Screen } from '../components/Screen.tsx'
 import {
+  ActiveWorkoutExistsError,
   createRoutine,
   deleteRoutine,
   duplicateRoutine,
   getRoutinesLastPerformed,
   listRoutines,
+  startWorkout,
   type Routine,
 } from '../data/index.ts'
 import styles from './RoutinesScreen.module.css'
@@ -24,6 +26,16 @@ export function RoutinesScreen() {
   const lastDone = useLiveQuery(() => getRoutinesLastPerformed(), [], {} as Record<string, string>)
   const [menuFor, setMenuFor] = useState<Routine | null>(null)
   const [deleting, setDeleting] = useState<Routine | null>(null)
+
+  async function startFrom(routineId: string) {
+    try {
+      await startWorkout({ routineId })
+    } catch (err) {
+      // One workout at a time: resume the one in progress instead.
+      if (!(err instanceof ActiveWorkoutExistsError)) throw err
+    }
+    navigate('/workout')
+  }
 
   async function create() {
     const routine = await createRoutine('New routine')
@@ -75,6 +87,11 @@ export function RoutinesScreen() {
         actions={
           menuFor
             ? [
+                {
+                  label: 'Start workout',
+                  disabled: menuFor.exercises.length === 0,
+                  onSelect: () => void startFrom(menuFor.id),
+                },
                 { label: 'Edit', onSelect: () => navigate(`/routines/${menuFor.id}`) },
                 { label: 'Duplicate', onSelect: () => void duplicateRoutine(menuFor.id) },
                 { label: 'Delete', destructive: true, onSelect: () => setDeleting(menuFor) },

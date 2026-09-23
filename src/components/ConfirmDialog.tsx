@@ -26,14 +26,20 @@ export function ConfirmDialog({
   const titleId = useId()
   const cancelRef = useRef<HTMLButtonElement>(null)
 
+  const cancel = useRef(onCancel)
+  useEffect(() => {
+    cancel.current = onCancel
+  })
+
+  // Runs when the dialog opens — not on every re-render, which would steal focus.
   useEffect(() => {
     if (!open) return
     // Focus the safe choice first.
     cancelRef.current?.focus()
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onCancel()
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && cancel.current()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, onCancel])
+  }, [open])
 
   if (!open) return null
   return (

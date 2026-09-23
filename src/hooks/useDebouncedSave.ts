@@ -12,18 +12,32 @@ export function useDebouncedSave<T>(save: (value: T) => Promise<unknown>, delayM
   })
   const pending = useRef<{ value: T } | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  // Every save started and not yet finished, combined (null when idle).
+  const inFlight = useRef<Promise<void> | null>(null)
 
-  /** Saves anything pending now. Await it when the next step needs the save done. */
+  /**
+   * Saves anything pending now, starting it synchronously (matters when iOS is closing the
+   * app). The returned promise resolves when EVERY save started so far has finished — await
+   * it before doing something that must see the latest data. Saves themselves are applied
+   * in the order started, because IndexedDB runs write transactions in creation order.
+   */
   const flush = useCallback((): Promise<void> => {
     clearTimeout(timer.current)
     const p = pending.current
-    if (!p) return Promise.resolve()
-    pending.current = null
-    // Errors are the save function's job to handle; never leave an unhandled rejection.
-    return Promise.resolve(saveRef.current(p.value)).then(
-      () => undefined,
-      () => undefined,
-    )
+    if (p) {
+      pending.current = null
+      // Errors are the save function's job to handle; never leave an unhandled rejection.
+      const started = Promise.resolve(saveRef.current(p.value)).then(
+        () => undefined,
+        () => undefined,
+      )
+      const all: Promise<void> = Promise.all([inFlight.current, started]).then(() => undefined)
+      inFlight.current = all
+      void all.then(() => {
+        if (inFlight.current === all) inFlight.current = null
+      })
+    }
+    return inFlight.current ?? Promise.resolve()
   }, [])
 
   const schedule = useCallback(

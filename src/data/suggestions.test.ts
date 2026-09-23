@@ -40,6 +40,20 @@ describe('suggestSet', () => {
     expect(suggestSet({ index: 4, previousSets: [], plannedSets: planned, unit: 'kg' }).reps).toBe(8)
   })
 
+  it('with no history, copies the nearest filled-in set above in this workout', () => {
+    const above = [done(60, 8), makeSet(), makeSet()]
+    const s = suggestSet({ index: 3, previousSets: [], plannedSets: [{ targetReps: 10 }], unit: 'kg', setsAbove: above })
+    expect(s).toMatchObject({ weight: 60, reps: 8 })
+    // typed but not yet ticked counts too
+    const typed = suggestSet({ index: 1, previousSets: [], plannedSets: [], unit: 'kg', setsAbove: [makeSet({ weight: 40 })] })
+    expect(typed).toMatchObject({ weight: 40, reps: null })
+  })
+
+  it('last session still beats the set above', () => {
+    const s = suggestSet({ index: 1, previousSets: [done(80, 8), done(80, 8)], plannedSets: [], unit: 'kg', setsAbove: [done(85, 5)] })
+    expect(s.weight).toBe(80)
+  })
+
   it('suggests nothing without history or plan', () => {
     expect(suggestSet({ index: 0, previousSets: [], plannedSets: [], unit: 'lb' })).toEqual({
       weight: null,

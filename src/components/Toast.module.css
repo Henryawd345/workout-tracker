@@ -1,0 +1,39 @@
+.region {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--toast-offset, var(--space-4)) + var(--safe-bottom));
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--space-4);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 480px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--space-2) 0 var(--space-4);
+  border-radius: var(--radius);
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.25);
+  pointer-events: auto;
+}
+
+.toast span {
+  flex: 1;
+}
+
+.action {
+  min-height: var(--tap);
+  padding: 0 var(--space-3);
+  border: none;
+  background: transparent;
+  color: var(--inverse-accent);
+  font-weight: 700;
+}

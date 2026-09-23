@@ -159,3 +159,19 @@ export function exerciseSetsInWorkout(workout: Workout, exerciseId: ID): SetEntr
     workout.exercises.filter((e) => e.exerciseId === exerciseId).flatMap((e) => e.sets),
   )
 }
+
+export type RecordKind = keyof PersonalRecords
+
+/**
+ * Which personal records a workout holds for one exercise — shown as "New record!" after
+ * finishing. Matching an old best doesn't count (the first session to reach it keeps it).
+ * A first-ever session sets no records: there was nothing to beat.
+ */
+export function recordsSetBy(sessions: ExerciseSession[], workoutId: ID, unit: WeightUnit): RecordKind[] {
+  const earlier = sessions.filter((s) => s.workoutId !== workoutId)
+  const self = sessions.find((s) => s.workoutId === workoutId)
+  if (!self || earlier.every((s) => s.date >= self.date)) return []
+  const before = earlier.filter((s) => s.date < self.date)
+  const records = personalRecords([...before, self], unit)
+  return (Object.keys(records) as RecordKind[]).filter((k) => records[k]?.workoutId === workoutId)
+}

@@ -11,6 +11,10 @@
   --accent-text: #ffffff;
   --success: #15924a;
   --danger: #c93434;
+  /* Accent on the inverted (dark-on-light / light-on-dark) toast */
+  --inverse-accent: #8fb0ff;
+  --success-bg: #e3f5ea;
+  --on-success: #ffffff;
 
   --radius: 14px;
   --radius-sm: 10px;
@@ -45,6 +49,9 @@
     --accent-text: #0b0d11;
     --success: #34c46e;
     --danger: #f06363;
+    --inverse-accent: #2f62e8;
+    --success-bg: #173524;
+    --on-success: #0b0d11;
   }
 }
 

@@ -51,10 +51,10 @@ Bottom tab bar (always visible except during an active workout):
     - Weight/reps inputs show **suggested values in grey** (from last session, else routine targets).
     - Tapping ✓ with no edits confirms the suggestion → **one tap per set** in the common case.
     - A set only counts once ✓ is tapped. Tapping ✓ again un-completes it.
-  - *+ Add set*; swipe left (or long-press) a set to delete.
+  - *+ Add set*; tap a set's number → Delete set (a swipe gesture was dropped: hard to discover and to make accessible). Exercises reorder via ⋯ → Move up/down.
 - *+ Add exercise* at the bottom → Exercise Picker.
 - **Rest timer bar** pinned above the bottom edge after a set is completed: countdown · −15s · +15s · pause · skip.
-- **Undo toast** after deleting a set/exercise or completing a set: "Set deleted · Undo".
+- **Undo toast** after deleting a set, or removing/replacing an exercise: "Set 2 deleted · Undo". (A completed set is undone by tapping ✓ again.)
 - **Minimise** (↓) returns to the tabs; a "Workout in progress" bar stays on top of every tab.
 - **Finish** → if sets are incomplete: "3 sets not completed — Discard them / Go back" → **Summary screen**: duration, sets, total volume, new personal records, workout note → *Done*.
 
@@ -195,10 +195,10 @@ interface Settings {               // single record, id = 'settings'
 
 ### Rules that the code must follow
 - **Conversion:** 1 lb = 0.45359237 kg exactly. Convert only for display and charts; round the display to 0.1.
-- **Suggestions** (never stored as real values): for set *n*, use set *n* of the most recent completed workout containing that exercise **that started before the current one** (so editing an old workout compares with the session before it); if there is none, use the last set from it; otherwise, use the routine targets. When ✓ is tapped, empty fields are filled from the suggestion. A suggested weight **keeps its original unit** (225 lb stays 225 lb even when logging in kg); the screen converts it only for display, so accepting it causes no rounding drift. If an exercise appears twice in a workout, the 2nd appearance is suggested from last time's 2nd appearance (`previousSetsFor`).
+- **Suggestions** (never stored as real values): for set *n*, use set *n* of the most recent completed workout containing that exercise **that started before the current one** (so editing an old workout compares with the session before it); if there is none, use the last set from it; otherwise the nearest filled-in set above it in this workout (so a brand-new exercise is one tap per set after set 1); otherwise the routine targets. When ✓ is tapped, empty fields are filled from the suggestion. A suggested weight **keeps its original unit** (225 lb stays 225 lb even when logging in kg); the screen converts it only for display, so accepting it causes no rounding drift. If an exercise appears twice in a workout, the 2nd appearance is suggested from last time's 2nd appearance (`previousSetsFor`).
 - **What counts:** history, stats, PRs and "last time" use **completed sets only**.
 - **Auto-save:** every change writes the whole workout record immediately. No save button anywhere. A save is refused (`StaleSaveError`) if the workout was finished, discarded or deleted in the meantime — the screen should ignore that error, never retry it.
-- **Undo:** keep the last 20 snapshots of the active workout in memory; Undo restores the previous one (and saves it).
+- **Undo:** deleting a set, removing or replacing an exercise shows an Undo toast. Undo puts back just that one thing (never a whole snapshot), so changes made after it are kept. Completing a set is undone by tapping ✓ again.
 - **Rest timer** is based on the `endsAt` timestamp, not on counting ticks, so it stays correct after the phone locks or the app is closed.
 - **Deleting a custom exercise** that appears in history archives it instead.
 - **Volume** = Σ(weight × reps) over completed sets, converted to the display unit.
@@ -214,7 +214,7 @@ The order builds the **thinnest complete flow first** (phases 0–5), then deepe
 - [x] **1. Data layer** — types, Dexie schema, unit conversion, seed library (~80 common exercises), functions for routines/workouts/settings. Unit tests for conversion, suggestions, volume, PRs.
 - [x] **2. Exercise library + picker** — search, filters, recent, custom exercise create/edit/archive.
 - [x] **3. Routines** — list, editor with reorder, duplicate, delete. (Reorder: drag handle or ⋯ → Move up/down. Automated tests use the menu; finger-drag was checked by hand — simulated touch drags are unreliable in WebKit.)
-- [ ] **4. Active workout (core)** — start from routine or empty; set rows with suggestions and ✓; add/remove sets; add/replace/remove/reorder exercises; notes; undo; auto-save; resume after reload; finish + summary. Also: add an icon-only `IconButton` (button version of `IconLink`, same 48px style); switch app updates from `autoUpdate` to prompt-based so a new version never reloads the page during a workout.
+- [x] **4. Active workout (core)** — start from routine or empty; set rows with suggestions and ✓; add/remove sets; add/replace/remove/reorder exercises; notes; undo; auto-save; resume after reload; finish + summary. Also: add an icon-only `IconButton` (button version of `IconLink`, same 48px style); switch app updates from `autoUpdate` to prompt-based so a new version never reloads the page during a workout.
 - [ ] **5. History (basic)** — list + workout detail. ✅ *Milestone: full flow works end-to-end.* Playwright test covers it.
 - [ ] **6. Rest timer** — auto-start, pause, skip, ±15s, survives reload; vibration/sound where supported.
 - [ ] **7. History (full)** — calendar view, edit past workouts, delete.

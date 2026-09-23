@@ -195,9 +195,9 @@ interface Settings {               // single record, id = 'settings'
 
 ### Rules that the code must follow
 - **Conversion:** 1 lb = 0.45359237 kg exactly. Convert only for display and charts; round the display to 0.1.
-- **Suggestions** (never stored as real values): for set *n*, use set *n* of the most recent completed workout containing that exercise; if there is none, use the last set from it; otherwise, use the routine targets. When ✓ is tapped, empty fields are filled from the suggestion.
+- **Suggestions** (never stored as real values): for set *n*, use set *n* of the most recent completed workout containing that exercise **that started before the current one** (so editing an old workout compares with the session before it); if there is none, use the last set from it; otherwise, use the routine targets. When ✓ is tapped, empty fields are filled from the suggestion. A suggested weight **keeps its original unit** (225 lb stays 225 lb even when logging in kg); the screen converts it only for display, so accepting it causes no rounding drift. If an exercise appears twice in a workout, the 2nd appearance is suggested from last time's 2nd appearance (`previousSetsFor`).
 - **What counts:** history, stats, PRs and "last time" use **completed sets only**.
-- **Auto-save:** every change writes the whole workout record immediately. No save button anywhere.
+- **Auto-save:** every change writes the whole workout record immediately. No save button anywhere. A save is refused (`StaleSaveError`) if the workout was finished, discarded or deleted in the meantime — the screen should ignore that error, never retry it.
 - **Undo:** keep the last 20 snapshots of the active workout in memory; Undo restores the previous one (and saves it).
 - **Rest timer** is based on the `endsAt` timestamp, not on counting ticks, so it stays correct after the phone locks or the app is closed.
 - **Deleting a custom exercise** that appears in history archives it instead.
@@ -211,7 +211,7 @@ Each phase ends with passing tests, a tester-agent check, and a git commit.
 The order builds the **thinnest complete flow first** (phases 0–5), then deepens it.
 
 - [x] **0. Project setup** — Vite + React + TS, oxlint, Vitest, Playwright, PWA plugin, tab shell with 4 empty tabs, base styles (large tap targets ≥ 48px, readable 16px+ text, light/dark).
-- [ ] **1. Data layer** — types, Dexie schema, unit conversion, seed library (~80 common exercises), functions for routines/workouts/settings. Unit tests for conversion, suggestions, volume, PRs.
+- [x] **1. Data layer** — types, Dexie schema, unit conversion, seed library (~80 common exercises), functions for routines/workouts/settings. Unit tests for conversion, suggestions, volume, PRs.
 - [ ] **2. Exercise library + picker** — search, filters, recent, custom exercise create/edit/archive.
 - [ ] **3. Routines** — list, editor with reorder, duplicate, delete.
 - [ ] **4. Active workout (core)** — start from routine or empty; set rows with suggestions and ✓; add/remove sets; add/replace/remove/reorder exercises; notes; undo; auto-save; resume after reload; finish + summary. Also: add an icon-only `IconButton` (button version of `IconLink`, same 48px style); switch app updates from `autoUpdate` to prompt-based so a new version never reloads the page during a workout.

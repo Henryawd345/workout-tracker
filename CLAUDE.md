@@ -15,6 +15,9 @@ React 19 + TypeScript + Vite · React Router (hash routes, `src/router.tsx`) · 
 
 ## Layout
 - `src/screens/` one file per screen · `src/components/` shared UI · `src/data/` types, database, calculations
+- Screens import data functions from `src/data/index.ts` only. All database writes go through the functions in `src/data/` (never call `db.*` from a screen).
+- Data tests: call `resetDb()` in `beforeEach`; build test data with helpers in `src/test/factories.ts`.
+- Changing the database indexes means adding `db.version(2)` in `src/data/db.ts` — never edit version 1.
 - Use the colour/spacing variables from `global.css`; never hard-code colours.
 
 ## Rules

@@ -12,6 +12,8 @@ import { useWorkoutEditor } from '../components/workout/useWorkoutEditor.ts'
 import { WorkoutExerciseList } from '../components/workout/WorkoutExerciseList.tsx'
 import {
   deleteWorkout,
+  getSettings,
+  listExercises,
   getWorkout,
   renameWorkout,
   saveWorkout,
@@ -20,6 +22,8 @@ import {
   StaleSaveError,
   tidyFinishedWorkout,
   workoutDurationSec,
+  type Exercise,
+  type Settings,
   type Workout,
 } from '../data/index.ts'
 import styles from './WorkoutEditScreen.module.css'
@@ -27,10 +31,12 @@ import styles from './WorkoutEditScreen.module.css'
 export function WorkoutEditScreen() {
   const { id = '' } = useParams()
   // Loaded once; after that the editor owns the workout and saves it.
-  const [loaded, setLoaded] = useState<Workout | null | undefined>(undefined)
+  const [loaded, setLoaded] = useState<{ workout: Workout; settings: Settings; exercises: Exercise[] } | null | undefined>(undefined)
   useEffect(() => {
     let cancelled = false
-    void getWorkout(id).then((w) => !cancelled && setLoaded(w && w.status === 'completed' ? w : null))
+    void Promise.all([getWorkout(id), getSettings(), listExercises()]).then(
+      ([w, settings, exercises]) => !cancelled && setLoaded(w && w.status === 'completed' ? { workout: w, settings, exercises } : null),
+    )
     return () => {
       cancelled = true
     }
@@ -44,14 +50,16 @@ export function WorkoutEditScreen() {
       </Screen>
     )
   }
-  return <Editor key={loaded.id} initial={loaded} />
+  return <Editor key={loaded.workout.id} initial={loaded.workout} settings={loaded.settings} exercises={loaded.exercises} />
 }
 
-function Editor({ initial }: { initial: Workout }) {
+function Editor({ initial, settings, exercises }: { initial: Workout; settings: Settings; exercises: Exercise[] }) {
   const navigate = useNavigate()
   const editor = useWorkoutEditor(initial, {
     onStale: () => navigate('/history', { replace: true }),
     restTimer: false,
+    settings,
+    exercises,
   })
   const { workout, apply, latest } = editor
   const [date, setDate] = useState(toDateInputValue(initial.startedAt))

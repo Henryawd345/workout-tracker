@@ -25,7 +25,6 @@ import { EmptyState, Screen } from '../components/Screen.tsx'
 import {
   addPlannedSet,
   addRoutineExercises,
-  DEFAULT_SETTINGS,
   deleteRoutine,
   duplicateRoutine,
   getRoutine,
@@ -39,6 +38,7 @@ import {
   StaleRoutineError,
   updatePlannedSet,
   type Routine,
+  type Settings,
 } from '../data/index.ts'
 import { useDebouncedSave } from '../hooks/useDebouncedSave.ts'
 import styles from './RoutineEditorScreen.module.css'
@@ -49,8 +49,10 @@ export function RoutineEditorScreen() {
   const { id = '' } = useParams()
   // Loaded once; after that the editor owns the routine and saves it.
   const routine = useLiveQuery(async () => (await getRoutine(id)) ?? null, [id])
+  // Settings (unit, default rest) must be known before editing, never defaulted.
+  const initialSettings = useLiveQuery(() => getSettings(), [])
 
-  if (routine === undefined) return <Screen title="" leading={back}>{null}</Screen>
+  if (routine === undefined || initialSettings === undefined) return <Screen title="" leading={back}>{null}</Screen>
   if (routine === null) {
     return (
       <Screen title="Routine" leading={back}>
@@ -58,10 +60,10 @@ export function RoutineEditorScreen() {
       </Screen>
     )
   }
-  return <RoutineEditor key={routine.id} initial={routine} />
+  return <RoutineEditor key={routine.id} initial={routine} initialSettings={initialSettings} />
 }
 
-function RoutineEditor({ initial }: { initial: Routine }) {
+function RoutineEditor({ initial, initialSettings }: { initial: Routine; initialSettings: Settings }) {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const isNew = params.get('new') === '1'
@@ -72,7 +74,7 @@ function RoutineEditor({ initial }: { initial: Routine }) {
 
   const exercises = useLiveQuery(() => listExercises(), [])
   const exerciseById = useMemo(() => new Map((exercises ?? []).map((e) => [e.id, e])), [exercises])
-  const settings = useLiveQuery(() => getSettings(), [], DEFAULT_SETTINGS)
+  const settings = useLiveQuery(() => getSettings(), [], initialSettings)
 
   const [saveFailed, setSaveFailed] = useState(false)
   const { schedule, flush, cancel } = useDebouncedSave(

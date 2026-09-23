@@ -19,9 +19,13 @@ import {
   finishWorkout,
   formatDuration,
   getActiveWorkout,
+  getSettings,
+  listExercises,
   renameWorkout,
   setCounts,
   setWorkoutNote,
+  type Exercise,
+  type Settings,
   type Workout,
 } from '../data/index.ts'
 import { useNow } from '../hooks/useNow.ts'
@@ -29,10 +33,12 @@ import styles from './ActiveWorkoutScreen.module.css'
 
 export function ActiveWorkoutScreen() {
   // Loaded once. After that this screen owns the workout and saves every change.
-  const [loaded, setLoaded] = useState<Workout | null | undefined>(undefined)
+  const [loaded, setLoaded] = useState<{ workout: Workout; settings: Settings; exercises: Exercise[] } | null | undefined>(undefined)
   useEffect(() => {
     let cancelled = false
-    void getActiveWorkout().then((w) => !cancelled && setLoaded(w ?? null))
+    void Promise.all([getActiveWorkout(), getSettings(), listExercises()]).then(
+      ([w, settings, exercises]) => !cancelled && setLoaded(w ? { workout: w, settings, exercises } : null),
+    )
     return () => {
       cancelled = true
     }
@@ -49,17 +55,19 @@ export function ActiveWorkoutScreen() {
       </Screen>
     )
   }
-  return <WorkoutSession key={loaded.id} initial={loaded} />
+  return <WorkoutSession key={loaded.workout.id} initial={loaded.workout} settings={loaded.settings} exercises={loaded.exercises} />
 }
 
 type Dialog = 'finish-incomplete' | 'finish-empty' | 'discard' | null
 
-function WorkoutSession({ initial }: { initial: Workout }) {
+function WorkoutSession({ initial, settings, exercises }: { initial: Workout; settings: Settings; exercises: Exercise[] }) {
   const navigate = useNavigate()
   const editor = useWorkoutEditor(initial, {
     // Finished or discarded somewhere else (another tab): nothing left to edit here.
     onStale: () => navigate('/today', { replace: true }),
     restTimer: true,
+    settings,
+    exercises,
   })
   const { workout, apply, latest } = editor
   const [dialog, setDialog] = useState<Dialog>(null)

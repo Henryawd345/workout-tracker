@@ -2,7 +2,6 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useRef, useState } from 'react'
 import {
   addWorkoutExercises,
-  DEFAULT_SETTINGS,
   getLastPerformance,
   getRoutine,
   getSettings,
@@ -15,9 +14,11 @@ import {
   startRest,
   suggestSet,
   toggleWorkoutSet,
+  type Exercise,
   type ExerciseSession,
   type ID,
   type SetEntry,
+  type Settings,
   type Workout,
   type WorkoutExercise,
 } from '../../data/index.ts'
@@ -29,6 +30,13 @@ import { setFieldId } from './setFieldId.ts'
 const DEFAULT_NEW_SETS = 3
 
 interface EditorOptions {
+  /**
+   * Settings loaded together with the workout. Never start from defaults: a tap before
+   * settings arrive would otherwise log in the wrong unit or start an unwanted rest timer.
+   */
+  settings: Settings
+  /** The exercise library, loaded with the workout for the same reason (weight/reps/time types). */
+  exercises: Exercise[]
   /** The workout was finished, discarded or deleted elsewhere. */
   onStale: () => void
   /** Start the rest timer when a set is ticked (active workouts only). */
@@ -39,17 +47,17 @@ interface EditorOptions {
  * Everything needed to edit a workout — the one in progress, or a past one from History.
  * Holds the workout in state, shows every change at once and auto-saves it.
  */
-export function useWorkoutEditor(initial: Workout, { onStale, restTimer }: EditorOptions) {
+export function useWorkoutEditor(initial: Workout, { onStale, restTimer, settings: initialSettings, exercises: initialExercises }: EditorOptions) {
   const [workout, setWorkout] = useState(initial)
   // Always the newest workout, for callbacks (like Undo) that run after later changes.
   const latest = useRef(initial)
   const [toast, setToast] = useState<ToastMessage | null>(null)
   const [saveFailed, setSaveFailed] = useState(false)
 
-  const settings = useLiveQuery(() => getSettings(), [], DEFAULT_SETTINGS)
+  const settings = useLiveQuery(() => getSettings(), [], initialSettings)
   const unit = settings.displayUnit
-  const exerciseList = useLiveQuery(() => listExercises(), [])
-  const exercises = useMemo(() => new Map((exerciseList ?? []).map((e) => [e.id, e])), [exerciseList])
+  const exerciseList = useLiveQuery(() => listExercises(), [], initialExercises)
+  const exercises = useMemo(() => new Map(exerciseList.map((e) => [e.id, e])), [exerciseList])
   const routine = useLiveQuery(
     async () => (workout.routineId ? ((await getRoutine(workout.routineId)) ?? null) : null),
     [workout.routineId],

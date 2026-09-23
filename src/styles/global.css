@@ -1,0 +1,101 @@
+/* Design tokens. Every component uses these variables — never hard-coded colours. */
+:root {
+  color-scheme: light;
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #eceef2;
+  --text: #14161a;
+  --text-muted: #5d6470;
+  --border: #d9dce2;
+  --accent: #2f62e8;
+  --accent-text: #ffffff;
+  --success: #15924a;
+  --danger: #c93434;
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --tap: 48px; /* minimum tap-target size */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --font-sm: 15px;
+  --font-md: 17px;
+  --font-lg: 20px;
+  --font-xl: 28px;
+
+  --tabbar-height: 60px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #0f1115;
+    --surface: #181b21;
+    --surface-2: #22262e;
+    --text: #f1f3f6;
+    --text-muted: #9aa2ae;
+    --border: #2d323b;
+    --accent: #5b8cff;
+    --accent-text: #0b0d11;
+    --success: #34c46e;
+    --danger: #f06363;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-size: var(--font-md);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  /* 16px+ prevents iOS Safari from zooming in when a field is focused. */
+  font-size: max(16px, 1em);
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}

@@ -1,0 +1,15 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+}
+
+.button:active {
+  background: var(--surface-2);
+}

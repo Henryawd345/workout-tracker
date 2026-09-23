@@ -219,8 +219,8 @@ The order builds the **thinnest complete flow first** (phases 0–5), then deepe
 - [x] **6. Rest timer** — auto-start, pause, skip, ±15s, survives reload; vibration/sound where supported.
 - [x] **7. History (full)** — calendar view, edit past workouts, delete.
 - [x] **8. Progress** — per-exercise charts, time ranges, PRs, workouts-per-week.
-- [ ] **9. Settings & data** — units, rest defaults, export JSON/CSV, import JSON, delete all.
-- [ ] **10. Reliability & polish** — (if History gets slow with years of data: store per-workout summary fields or page the list) — offline check (airplane mode), persistent storage request, install prompt, accessibility pass, final full test + review.
+- [x] **9. Settings & data** — units, rest defaults, export JSON/CSV, import JSON, delete all.
+- [ ] **10. Reliability & polish** — (check on the iPhone, installed to the Home Screen: “Save a backup” opens the share sheet — the plain-download fallback may not work in Home Screen apps) — (if History gets slow with years of data: store per-workout summary fields or page the list) — offline check (airplane mode), persistent storage request, install prompt, accessibility pass, final full test + review.
 
 ### How agents are used here
 - **Main agent:** plans and builds each phase in order. Phases 0–4 all touch the shared data types, so they run one at a time.

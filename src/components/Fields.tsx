@@ -117,6 +117,34 @@ export function SelectField<T extends string>({ label, value, options, onChange,
   )
 }
 
+interface SwitchProps {
+  label: string
+  hint?: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+}
+
+/** On/off setting (a checkbox that looks like an iPhone switch). */
+export function Switch({ label, hint, checked, onChange }: SwitchProps) {
+  const id = useId()
+  return (
+    <div className={styles.switchRow}>
+      <label htmlFor={id} className={styles.switchText}>
+        <span>{label}</span>
+        {hint && <span className={styles.hint}>{hint}</span>}
+      </label>
+      <input
+        id={id}
+        type="checkbox"
+        role="switch"
+        className={styles.switch}
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+    </div>
+  )
+}
+
 interface SegmentedProps<T extends string> {
   label: string
   value: T

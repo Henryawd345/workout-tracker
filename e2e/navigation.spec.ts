@@ -31,3 +31,15 @@ test('page does not scroll sideways', async ({ page }) => {
   )
   expect(overflow).toBe(0)
 })
+
+test('settings fit the phone and remember the unit', async ({ page }) => {
+  await page.goto('/#/settings')
+  await page.locator('label', { hasText: 'Pounds (lb)' }).tap()
+  // On the very first launch the app is still loading its exercise library, so allow a moment.
+  await expect(page.getByRole('radio', { name: 'Pounds (lb)' })).toBeChecked()
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  expect(overflow).toBe(0)
+  await page.screenshot({ path: 'test-results/settings.png', fullPage: true })
+  await page.reload()
+  await expect(page.getByRole('radio', { name: 'Pounds (lb)' })).toBeChecked()
+})

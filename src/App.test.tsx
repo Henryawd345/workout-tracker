@@ -28,7 +28,7 @@ describe('app shell', () => {
     renderApp('/today')
     await userEvent.click(await screen.findByRole('link', { name: 'Settings' }))
     expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('link', { name: 'Back' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }))
     expect(screen.getByRole('heading', { name: 'Today' })).toBeInTheDocument()
   })
 

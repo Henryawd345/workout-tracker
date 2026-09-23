@@ -38,6 +38,15 @@ test('core flow: routine → start → log → reload → finish → summary', a
   await squat.getByRole('textbox', { name: 'Set 1 weight (kg)' }).fill('60')
   await squat.getByRole('textbox', { name: 'Set 1 reps' }).fill('8')
   await check.tap()
+
+  // Rest timer starts, pinned to the bottom, and can be adjusted
+  const rest = page.getByRole('group', { name: 'Rest timer' })
+  await expect(rest).toBeVisible()
+  await rest.getByRole('button', { name: '15 seconds more' }).tap()
+  await expect(rest.getByRole('timer')).toHaveText(/^1:(45|44|43)$/)
+  const restBox = (await rest.boundingBox())!
+  expect(Math.round(restBox.y + restBox.height)).toBe(page.viewportSize()!.height)
+
   await squat.getByRole('textbox', { name: 'Set 2 weight (kg)' }).fill('60')
   await squat.getByRole('textbox', { name: 'Set 2 reps' }).fill('8')
   await squat.getByRole('button', { name: 'Complete set 2' }).tap()

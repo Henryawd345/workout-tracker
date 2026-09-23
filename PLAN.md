@@ -199,7 +199,7 @@ interface Settings {               // single record, id = 'settings'
 - **What counts:** history, stats, PRs and "last time" use **completed sets only**.
 - **Auto-save:** every change writes the whole workout record immediately. No save button anywhere. A save is refused (`StaleSaveError`) if the workout was finished, discarded or deleted in the meantime — the screen should ignore that error, never retry it.
 - **Undo:** deleting a set, removing or replacing an exercise shows an Undo toast. Undo puts back just that one thing (never a whole snapshot), so changes made after it are kept. Completing a set is undone by tapping ✓ again.
-- **Rest timer** is based on the `endsAt` timestamp, not on counting ticks, so it stays correct after the phone locks or the app is closed.
+- **Rest timer** is based on the `endsAt` timestamp, not on counting ticks, so it stays correct after the phone locks or the app is closed. It starts when a set is ticked (if auto-start is on and the exercise has a rest time); un-ticking a set leaves a running rest alone. It beeps once when it runs out while the app is open (not for a rest that ended while closed, nor when you shorten it to zero yourself).
 - **Deleting a custom exercise** that appears in history archives it instead.
 - **Volume** = Σ(weight × reps) over completed sets, converted to the display unit.
 
@@ -216,7 +216,7 @@ The order builds the **thinnest complete flow first** (phases 0–5), then deepe
 - [x] **3. Routines** — list, editor with reorder, duplicate, delete. (Reorder: drag handle or ⋯ → Move up/down. Automated tests use the menu; finger-drag was checked by hand — simulated touch drags are unreliable in WebKit.)
 - [x] **4. Active workout (core)** — start from routine or empty; set rows with suggestions and ✓; add/remove sets; add/replace/remove/reorder exercises; notes; undo; auto-save; resume after reload; finish + summary. Also: add an icon-only `IconButton` (button version of `IconLink`, same 48px style); switch app updates from `autoUpdate` to prompt-based so a new version never reloads the page during a workout.
 - [x] **5. History (basic)** — list + workout detail. ✅ *Milestone: full flow works end-to-end.* Playwright test covers it.
-- [ ] **6. Rest timer** — auto-start, pause, skip, ±15s, survives reload; vibration/sound where supported.
+- [x] **6. Rest timer** — auto-start, pause, skip, ±15s, survives reload; vibration/sound where supported.
 - [ ] **7. History (full)** — calendar view, edit past workouts, delete.
 - [ ] **8. Progress** — per-exercise charts, time ranges, PRs, workouts-per-week.
 - [ ] **9. Settings & data** — units, rest defaults, export JSON/CSV, import JSON, delete all.

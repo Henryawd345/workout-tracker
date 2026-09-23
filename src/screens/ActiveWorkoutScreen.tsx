@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router'
 import { ActionSheet } from '../components/ActionSheet.tsx'
 import { Button, ButtonLink } from '../components/Button.tsx'
@@ -11,6 +11,8 @@ import { ChevronDownIcon, MoreIcon, PlusIcon } from '../components/icons.tsx'
 import { EmptyState, Screen } from '../components/Screen.tsx'
 import { TextDialog } from '../components/TextDialog.tsx'
 import { Toast, type ToastMessage } from '../components/Toast.tsx'
+import { restOverAlert, unlockAudio } from '../components/workout/alerts.ts'
+import { RestTimerBar } from '../components/workout/RestTimerBar.tsx'
 import { setFieldId } from '../components/workout/setFieldId.ts'
 import { WorkoutExerciseCard } from '../components/workout/WorkoutExerciseCard.tsx'
 import {
@@ -43,6 +45,7 @@ import {
   setWorkoutExerciseRest,
   setWorkoutNote,
   StaleSaveError,
+  startRest,
   suggestSet,
   toggleWorkoutSet,
   updateWorkoutSet,
@@ -176,8 +179,12 @@ function WorkoutSession({ initial }: { initial: Workout }) {
       unit,
       setsAbove: item.sets.slice(0, index),
     })
+    unlockAudio() // iPhone only allows the end-of-rest beep after a tap
     const next = toggleWorkoutSet(workout, item.id, set.id, suggestion, tracking)
-    if (next) return apply(next, { immediate: true })
+    if (next) {
+      const startsRest = !set.completed && settings.autoStartRest && item.restSec > 0
+      return apply(startsRest ? { ...next, restTimer: startRest(item.restSec, Date.now()) } : next, { immediate: true })
+    }
 
     // Something is missing: point at it.
     const merged = {
@@ -234,7 +241,11 @@ function WorkoutSession({ initial }: { initial: Workout }) {
   const incomplete = counts.total - counts.completed
 
   return (
-    <div className={styles.screen}>
+    <div
+      className={styles.screen}
+      // Lift the toast above the rest timer while it is showing.
+      style={workout.restTimer ? ({ '--toast-offset': '96px' } as CSSProperties) : undefined}
+    >
       <header className={styles.header}>
         <IconButton label="Minimise workout" onClick={() => navigate('/today')}>
           <ChevronDownIcon />
@@ -384,6 +395,13 @@ function WorkoutSession({ initial }: { initial: Workout }) {
         onConfirm={() => void doDiscard()}
         onCancel={() => setDialog(null)}
       />
+      {workout.restTimer && (
+        <RestTimerBar
+          timer={workout.restTimer}
+          onChange={(restTimer) => apply({ ...latest.current, restTimer }, { immediate: true })}
+          onOver={restOverAlert}
+        />
+      )}
       <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   )

@@ -174,6 +174,24 @@ export async function listCompletedWorkouts(): Promise<Workout[]> {
   return workouts.reverse()
 }
 
+/**
+ * Exercises from the most recent workouts (newest first, no repeats), for the picker's
+ * "Recent" section. Includes the workout in progress.
+ */
+export async function listRecentExerciseIds(limit = 8): Promise<ID[]> {
+  const recent: ID[] = []
+  await db.workouts
+    .orderBy('startedAt')
+    .reverse()
+    .until(() => recent.length >= limit)
+    .each((w) => {
+      for (const e of w.exercises) {
+        if (recent.length < limit && !recent.includes(e.exerciseId)) recent.push(e.exerciseId)
+      }
+    })
+  return recent
+}
+
 /** Every finished session of one exercise, oldest first — for charts and records. */
 export async function getExerciseHistory(exerciseId: ID): Promise<ExerciseSession[]> {
   const workouts = await db.workouts.where('exerciseIds').equals(exerciseId).toArray()

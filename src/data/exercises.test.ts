@@ -3,6 +3,7 @@ import { addCompletedWorkout, done, makeExercise, resetDb } from '../test/factor
 import { db, ensureSeedExercises } from './db.ts'
 import {
   createCustomExercise,
+  isExerciseLogged,
   listExercises,
   removeCustomExercise,
   restoreExercise,
@@ -128,6 +129,53 @@ describe('custom exercises', () => {
     const e = await createCustomExercise(input)
     await createRoutine('Push', [newRoutineExercise(e.id, 90)])
     expect(await removeCustomExercise(e.id)).toBe('archived')
+  })
+
+  it('cannot reuse the name of an existing exercise', async () => {
+    await expect(createCustomExercise({ ...input, name: 'deadlift' })).rejects.toThrow('already exists')
+    const e = await createCustomExercise(input)
+    await expect(updateExercise(e.id, { name: 'Back Squat' })).rejects.toThrow('already exists')
+    // Keeping its own name, or changing only the case, is fine
+    await expect(updateExercise(e.id, { name: 'landmine press' })).resolves.toMatchObject({ name: 'landmine press' })
+  })
+
+  it('may reuse the name of an archived exercise', async () => {
+    const old = await createCustomExercise(input)
+    await addCompletedWorkout('2026-09-01T10:00:00Z', [makeExercise(old.id, [done(40, 10)])])
+    await removeCustomExercise(old.id)
+    await expect(createCustomExercise(input)).resolves.toMatchObject({ name: 'Landmine Press' })
+  })
+
+  it('will not restore an archived exercise whose name was taken meanwhile', async () => {
+    const old = await createCustomExercise(input)
+    await addCompletedWorkout('2026-09-01T10:00:00Z', [makeExercise(old.id, [done(40, 10)])])
+    await removeCustomExercise(old.id)
+    await createCustomExercise(input)
+
+    await expect(restoreExercise(old.id)).rejects.toThrow('already exists')
+    expect((await db.exercises.get(old.id))?.archived).toBe(true)
+
+    // Renaming the archived one first makes restoring possible
+    await updateExercise(old.id, { name: 'Landmine Press (old)' })
+    await restoreExercise(old.id)
+    expect((await db.exercises.get(old.id))?.archived).toBe(false)
+  })
+
+  it('rejects very long names and removing every muscle group', async () => {
+    await expect(createCustomExercise({ ...input, name: 'x'.repeat(61) })).rejects.toThrow('under 60')
+    const e = await createCustomExercise(input)
+    await expect(updateExercise(e.id, { muscleGroups: [] })).rejects.toThrow('muscle')
+  })
+
+  it('locks the tracking type once the exercise has been logged', async () => {
+    const e = await createCustomExercise(input)
+    await expect(updateExercise(e.id, { trackingType: 'reps_only' })).resolves.toMatchObject({
+      trackingType: 'reps_only',
+    })
+    await addCompletedWorkout('2026-09-01T10:00:00Z', [makeExercise(e.id, [done(40, 10)])])
+    expect(await isExerciseLogged(e.id)).toBe(true)
+    await expect(updateExercise(e.id, { trackingType: 'duration' })).rejects.toThrow('can’t change')
+    await expect(updateExercise(e.id, { note: 'still editable' })).resolves.toMatchObject({ note: 'still editable' })
   })
 
   it('built-in exercises cannot be removed', async () => {

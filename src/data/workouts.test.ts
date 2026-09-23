@@ -13,6 +13,7 @@ import {
   getExerciseHistory,
   getLastPerformance,
   listCompletedWorkouts,
+  listRecentExerciseIds,
   newWorkoutExercise,
   saveWorkout,
   StaleSaveError,
@@ -225,6 +226,14 @@ describe('history lookups', () => {
   it('finds the session before an older workout being edited', async () => {
     const last = await getLastPerformance('ex-back-squat', '2026-09-08T10:00:00Z')
     expect(last?.workoutId).toBe('sep1')
+  })
+
+  it('lists recently used exercises, newest first, without repeats', async () => {
+    const w = await startWorkout()
+    w.exercises = [makeExercise('ex-plank', []), makeExercise('ex-deadlift', [])]
+    await saveWorkout(w)
+    expect(await listRecentExerciseIds()).toEqual(['ex-plank', 'ex-deadlift', 'ex-back-squat'])
+    expect(await listRecentExerciseIds(2)).toEqual(['ex-plank', 'ex-deadlift'])
   })
 
   it('returns null for an exercise never done', async () => {

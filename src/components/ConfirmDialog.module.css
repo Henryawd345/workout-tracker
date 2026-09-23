@@ -1,0 +1,44 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgb(0 0 0 / 0.5);
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+
+.dialog {
+  width: 100%;
+  max-width: 360px;
+  padding: var(--space-5);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.title {
+  font-size: var(--font-lg);
+}
+
+.message {
+  margin-top: var(--space-2);
+  color: var(--text-muted);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.cancel {
+  min-height: var(--tap);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-weight: 600;
+}

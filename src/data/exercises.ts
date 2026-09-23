@@ -47,36 +47,60 @@ export interface NewExercise {
   note?: string
 }
 
+export const MAX_EXERCISE_NAME = 60
+
+/** Throws a user-readable error if the name is empty, too long or already taken. */
+async function checkName(name: string, ignoreId?: ID): Promise<void> {
+  if (!name) throw new Error('Exercise name is required')
+  if (name.length > MAX_EXERCISE_NAME) throw new Error(`Keep the name under ${MAX_EXERCISE_NAME} characters`)
+  const lower = name.toLowerCase()
+  const clash = await db.exercises
+    .filter((e) => !e.archived && e.id !== ignoreId && e.name.toLowerCase() === lower)
+    .first()
+  if (clash) throw new Error(`“${clash.name}” already exists`)
+}
+
+/**
+ * True if the exercise is in any workout — finished, or in progress even before a set is
+ * ticked. Deliberately cautious: it locks the tracking type and makes removal archive.
+ */
+export async function isExerciseLogged(id: ID): Promise<boolean> {
+  return (await db.workouts.where('exerciseIds').equals(id).count()) > 0
+}
+
 export async function createCustomExercise(input: NewExercise): Promise<Exercise> {
   const name = input.name.trim()
-  if (!name) throw new Error('Exercise name is required')
   if (input.muscleGroups.length === 0) throw new Error('Pick at least one muscle group')
-  const now = nowIso()
-  const exercise: Exercise = {
-    id: newId(),
-    name,
-    muscleGroups: input.muscleGroups,
-    equipment: input.equipment,
-    trackingType: input.trackingType,
-    note: input.note ?? '',
-    isCustom: true,
-    archived: false,
-    createdAt: now,
-    updatedAt: now,
-  }
-  await db.exercises.add(exercise)
-  return exercise
+  return db.transaction('rw', db.exercises, async () => {
+    await checkName(name)
+    const now = nowIso()
+    const exercise: Exercise = {
+      id: newId(),
+      name,
+      muscleGroups: input.muscleGroups,
+      equipment: input.equipment,
+      trackingType: input.trackingType,
+      note: input.note ?? '',
+      isCustom: true,
+      archived: false,
+      createdAt: now,
+      updatedAt: now,
+    }
+    await db.exercises.add(exercise)
+    return exercise
+  })
 }
 
 /**
  * Edits an exercise. The note can be changed on any exercise; the other fields only on
- * custom ones, so built-in exercises stay the same for everyone.
+ * custom ones, so built-in exercises stay the same for everyone. The tracking type is
+ * locked once the exercise has been logged, because old sets would no longer make sense.
  */
 export async function updateExercise(
   id: ID,
   changes: Partial<Pick<Exercise, 'name' | 'muscleGroups' | 'equipment' | 'trackingType' | 'note'>>,
 ): Promise<Exercise> {
-  return db.transaction('rw', db.exercises, async () => {
+  return db.transaction('rw', db.exercises, db.workouts, async () => {
     const current = await db.exercises.get(id)
     if (!current) throw new Error('Exercise not found')
     const allowed = current.isCustom ? changes : { note: changes.note }
@@ -86,7 +110,11 @@ export async function updateExercise(
       updatedAt: nowIso(),
     }
     next.name = next.name.trim()
-    if (!next.name) throw new Error('Exercise name is required')
+    if (next.name !== current.name) await checkName(next.name, id)
+    if (next.muscleGroups.length === 0) throw new Error('Pick at least one muscle group')
+    if (next.trackingType !== current.trackingType && (await isExerciseLogged(id))) {
+      throw new Error('This exercise has been logged, so its type can’t change. Create a new exercise instead.')
+    }
     await db.exercises.put(next)
     return next
   })
@@ -115,6 +143,12 @@ export async function removeCustomExercise(id: ID): Promise<'deleted' | 'archive
   })
 }
 
+/** Un-archives an exercise. Fails if another exercise took its name meanwhile — rename one first. */
 export async function restoreExercise(id: ID): Promise<void> {
-  await db.exercises.update(id, { archived: false, updatedAt: nowIso() })
+  await db.transaction('rw', db.exercises, async () => {
+    const exercise = await db.exercises.get(id)
+    if (!exercise) throw new Error('Exercise not found')
+    await checkName(exercise.name, id)
+    await db.exercises.update(id, { archived: false, updatedAt: nowIso() })
+  })
 }

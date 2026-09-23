@@ -5,7 +5,7 @@ Phone-first, offline workout logging app (weightlifting + timed exercises). Inst
 **Read `PLAN.md` first** — it holds the screen structure, data model, rules and phase checklist. Work one phase at a time, in order, and tick its checkbox when it is done.
 
 ## Stack
-React 19 + TypeScript + Vite · React Router (hash routes, `src/router.tsx`) · CSS Modules + tokens in `src/styles/global.css` · Dexie (IndexedDB) · Recharts · dnd-kit · Vitest + Testing Library · Playwright (WebKit, iPhone 14) · vite-plugin-pwa · oxlint
+React 19 + TypeScript + Vite · React Router (hash routes, `src/router.tsx`) · CSS Modules + tokens in `src/styles/global.css` · Dexie (IndexedDB) · hand-written SVG charts in src/components/charts (follow the dataviz rules: 2px lines, ringed dots, hairline grid, table view) · dnd-kit · Vitest + Testing Library · Playwright (WebKit, iPhone 14) · vite-plugin-pwa · oxlint
 
 ## Commands
 - Dev server: `npm run dev` (also reachable from the phone on the same Wi-Fi — use the "Network" URL it prints)

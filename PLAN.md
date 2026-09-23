@@ -16,7 +16,7 @@ Out of scope for v1: AI coaching, social features, smartwatch, cloud sync, accou
 | Backend | **None in v1** — all data stored on the device | Offline logging is required; no accounts or server to maintain |
 | Storage | IndexedDB via Dexie | Survives app close; fast; live-updating queries |
 | UI | React + TypeScript + Vite | Widely used; TypeScript catches data-shape mistakes |
-| Charts | Recharts | Simple React charts |
+| Charts | Small hand-written SVG charts (was: Recharts) | Lighter download for the phone; exact control of marks, touch and keyboard |
 | Reordering | dnd-kit (drag handle) | Works with touch |
 | Tests | Vitest (logic + database), Playwright in WebKit at iPhone 14 size (full flow) | |
 | Weight storage | Save the number **exactly as entered, with its unit** (`100` + `lb`); convert only for display | Avoids rounding drift (e.g. 45 lb → 20.41 kg → 44.99 lb) |
@@ -218,7 +218,7 @@ The order builds the **thinnest complete flow first** (phases 0–5), then deepe
 - [x] **5. History (basic)** — list + workout detail. ✅ *Milestone: full flow works end-to-end.* Playwright test covers it.
 - [x] **6. Rest timer** — auto-start, pause, skip, ±15s, survives reload; vibration/sound where supported.
 - [x] **7. History (full)** — calendar view, edit past workouts, delete.
-- [ ] **8. Progress** — per-exercise charts, time ranges, PRs, workouts-per-week.
+- [x] **8. Progress** — per-exercise charts, time ranges, PRs, workouts-per-week.
 - [ ] **9. Settings & data** — units, rest defaults, export JSON/CSV, import JSON, delete all.
 - [ ] **10. Reliability & polish** — (if History gets slow with years of data: store per-workout summary fields or page the list) — offline check (airplane mode), persistent storage request, install prompt, accessibility pass, final full test + review.
 

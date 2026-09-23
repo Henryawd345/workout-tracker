@@ -8,8 +8,8 @@ export interface ChipOption<T extends string> {
 interface ChipFilterProps<T extends string> {
   /** Read by screen readers, e.g. "Muscle group". */
   label: string
-  /** Text of the first chip, e.g. "All muscles". */
-  allLabel: string
+  /** Text of the first chip, e.g. "All muscles". Leave out for a choice with no "all". */
+  allLabel?: string
   options: ChipOption<T>[]
   value: T | null
   onChange: (value: T | null) => void
@@ -19,16 +19,18 @@ interface ChipFilterProps<T extends string> {
 export function ChipFilter<T extends string>({ label, allLabel, options, value, onChange }: ChipFilterProps<T>) {
   return (
     <div className={styles.scroller} role="group" aria-label={label}>
-      <button type="button" className={styles.chip} aria-pressed={value === null} onClick={() => onChange(null)}>
-        {allLabel}
-      </button>
+      {allLabel && (
+        <button type="button" className={styles.chip} aria-pressed={value === null} onClick={() => onChange(null)}>
+          {allLabel}
+        </button>
+      )}
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           className={styles.chip}
           aria-pressed={value === o.value}
-          onClick={() => onChange(value === o.value ? null : o.value)}
+          onClick={() => onChange(value === o.value && allLabel ? null : o.value)}
         >
           {o.label}
         </button>

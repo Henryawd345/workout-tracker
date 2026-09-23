@@ -120,4 +120,15 @@ test('second session: one tap per set using last time', async ({ page }) => {
   await squat.getByRole('textbox', { name: 'Set 3 reps' }).fill('4')
   await page.getByRole('button', { name: 'Done', exact: true }).tap()
   await expect(page.getByRole('listitem', { name: 'Back Squat' }).getByText('100×4 kg')).toBeVisible()
+
+  // Progress: chart for the squat, tap to read a value, fits the screen
+  await page.getByRole('link', { name: 'Progress' }).tap()
+  const chart = page.getByRole('img', { name: /Heaviest, Back Squat\. 2 sessions/ })
+  await expect(chart).toBeVisible()
+  const box = (await chart.boundingBox())!
+  await page.mouse.click(box.x + box.width - 20, box.y + box.height / 2)
+  await expect(page.getByRole('status').filter({ hasText: '100 kg' })).toBeVisible()
+  const progressOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  expect(progressOverflow).toBe(0)
+  await page.screenshot({ path: 'test-results/progress.png', fullPage: true })
 })

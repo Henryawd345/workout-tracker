@@ -174,6 +174,30 @@ export async function listCompletedWorkouts(): Promise<Workout[]> {
   return workouts.reverse()
 }
 
+/** Exercises you've logged, most sessions first: [exerciseId, sessionCount]. */
+export async function listLoggedExercises(): Promise<[ID, number][]> {
+  const counts = new Map<ID, number>()
+  await db.workouts
+    .where('status')
+    .equals('completed')
+    .each((w) => {
+      for (const id of new Set(w.exercises.filter((e) => e.sets.some((s) => s.completed)).map((e) => e.exerciseId))) {
+        counts.set(id, (counts.get(id) ?? 0) + 1)
+      }
+    })
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])
+}
+
+/** Start times of every finished workout (for the workouts-per-week chart). */
+export async function listCompletedStartTimes(): Promise<string[]> {
+  const times: string[] = []
+  await db.workouts
+    .where('status')
+    .equals('completed')
+    .each((w) => void times.push(w.startedAt))
+  return times
+}
+
 /** Number of finished workouts that started at or after `sinceIso` (e.g. "this week"). */
 export async function countCompletedSince(sinceIso: string): Promise<number> {
   return db.workouts

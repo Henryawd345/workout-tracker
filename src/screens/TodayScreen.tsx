@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { Button, ButtonLink } from '../components/Button.tsx'
 import { formatRelativeDay, plural, startOfWeekIso } from '../components/format.ts'
 import { IconLink } from '../components/IconButton.tsx'
+import { InstallTip } from '../components/InstallTip.tsx'
 import { PlusIcon, SettingsIcon } from '../components/icons.tsx'
 import { EmptyState, Screen } from '../components/Screen.tsx'
 import {
@@ -65,6 +66,8 @@ export function TodayScreen() {
         </section>
       ) : (
         <>
+          {/* Not while a workout is in progress: Resume stays at the top. */}
+          <InstallTip />
           <p className={styles.week}>
             {thisWeek === 0 ? 'No workouts yet this week.' : `${plural(thisWeek, 'workout')} this week.`}
           </p>

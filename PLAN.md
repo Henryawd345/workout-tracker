@@ -220,7 +220,7 @@ The order builds the **thinnest complete flow first** (phases 0–5), then deepe
 - [x] **7. History (full)** — calendar view, edit past workouts, delete.
 - [x] **8. Progress** — per-exercise charts, time ranges, PRs, workouts-per-week.
 - [x] **9. Settings & data** — units, rest defaults, export JSON/CSV, import JSON, delete all.
-- [ ] **10. Reliability & polish** — (check on the iPhone, installed to the Home Screen: “Save a backup” opens the share sheet — the plain-download fallback may not work in Home Screen apps) — (if History gets slow with years of data: store per-workout summary fields or page the list) — offline check (airplane mode), persistent storage request, install prompt, accessibility pass, final full test + review.
+- [x] **10. Reliability & polish** — Home Screen tip on iPhone; offline cache verified from the build; persistent storage requested at start; axe accessibility scan (light + dark) of every main screen and the active workout; README with deploy + install steps; GitHub Pages workflow. **Left for you:** put it online (needs your GitHub/Netlify account) and check on the iPhone, installed to the Home Screen: saving a backup opens the share sheet; dragging a routine’s exercises; the rest-timer beep with the phone locked. (If History gets slow after years of data: store per-workout summary fields or page the list.)
 
 ### How agents are used here
 - **Main agent:** plans and builds each phase in order. Phases 0–4 all touch the shared data types, so they run one at a time.

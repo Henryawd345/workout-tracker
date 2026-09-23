@@ -10,7 +10,9 @@ React 19 + TypeScript + Vite · React Router (hash routes, `src/router.tsx`) · 
 ## Commands
 - Dev server: `npm run dev` (also reachable from the phone on the same Wi-Fi — use the "Network" URL it prints)
 - Unit tests: `npm test` — files named `src/**/*.test.ts(x)`; render the app with `renderApp()` from `src/test/renderApp.tsx`
-- End-to-end tests: `npm run test:e2e` — files in `e2e/`; starts the dev server itself
+- End-to-end tests: `npm run test:e2e` — builds first (the offline check reads `dist/`), then runs `e2e/` against the dev server; includes an axe accessibility scan
+- Offline check: `npm run test:offline` — production build served from /wt/ (like GitHub Pages); service worker control + cache contents
+- Deploy: see README (GitHub Pages workflow in `.github/workflows/deploy.yml` sets `BASE_PATH`)
 - Lint / type check / build: `npm run lint` / `npm run typecheck` / `npm run build`
 
 ## Layout

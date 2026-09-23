@@ -1,0 +1,19 @@
+.tip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4) var(--space-1);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.title {
+  font-weight: 700;
+}
+
+.text {
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+}

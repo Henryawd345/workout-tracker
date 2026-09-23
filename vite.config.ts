@@ -4,6 +4,8 @@ import { defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // "/" for Netlify or Cloudflare Pages; "/<repo-name>/" for GitHub Pages (see README).
+  base: process.env.BASE_PATH ?? '/',
   plugins: [
     react(),
     VitePWA({
@@ -26,6 +28,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // The first install takes over the open page at once, so the very first visit already
+        // works offline. Later versions still wait for the user's Update tap (registerType 'prompt').
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
       },
     }),

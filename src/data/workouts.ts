@@ -174,6 +174,18 @@ export async function listCompletedWorkouts(): Promise<Workout[]> {
   return workouts.reverse()
 }
 
+/** When each routine was last finished: routineId → startedAt of the newest workout from it. */
+export async function getRoutinesLastPerformed(): Promise<Record<ID, string>> {
+  const last: Record<ID, string> = {}
+  await db.workouts
+    .where('status')
+    .equals('completed')
+    .each((w) => {
+      if (w.routineId && (!last[w.routineId] || w.startedAt > last[w.routineId])) last[w.routineId] = w.startedAt
+    })
+  return last
+}
+
 /**
  * Exercises from the most recent workouts (newest first, no repeats), for the picker's
  * "Recent" section. Includes the workout in progress.

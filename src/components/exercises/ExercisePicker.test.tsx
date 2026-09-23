@@ -79,8 +79,10 @@ describe('ExercisePicker', () => {
     const behind = screen.getByRole('button', { name: 'Behind' })
     const dialog = screen.getByRole('dialog', { name: 'Add exercises' })
     expect(dialog).toHaveFocus()
-    // The test renderer's container holds "Behind"; it must be inert while the picker is open.
+    // The test renderer's container holds "Behind"; it must be inert while the picker is open…
     expect(behind.closest('[inert]')).not.toBeNull()
+    // …but the picker itself must never be (jsdom ignores inert, so check the attribute).
+    expect(dialog.closest('[inert]')).toBeNull()
 
     rerender(<button type="button">Behind</button>)
     expect(screen.getByRole('button', { name: 'Behind' }).closest('[inert]')).toBeNull()

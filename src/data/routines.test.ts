@@ -9,6 +9,7 @@ import {
   listRoutines,
   newRoutineExercise,
   saveRoutine,
+  StaleRoutineError,
 } from './routines.ts'
 import { finishWorkout, getActiveWorkout, saveWorkout, startWorkout } from './workouts.ts'
 
@@ -30,6 +31,18 @@ describe('routines', () => {
     const list = await listRoutines()
     expect(list.map((r) => r.name)).toEqual(['A', 'B'])
     expect(list[0].exercises[0].sets).toHaveLength(5)
+  })
+
+  it('will not bring back a deleted routine through a late save', async () => {
+    const r = await createRoutine('Temp')
+    await deleteRoutine(r.id)
+    await expect(saveRoutine({ ...r, note: 'late' })).rejects.toBeInstanceOf(StaleRoutineError)
+    expect(await getRoutine(r.id)).toBeUndefined()
+  })
+
+  it('saves a blank name as "Untitled routine"', async () => {
+    const r = await createRoutine('Temp')
+    expect((await saveRoutine({ ...r, name: '   ' })).name).toBe('Untitled routine')
   })
 
   it('duplicate into an independent copy', async () => {

@@ -24,11 +24,27 @@ export async function createRoutine(name: string, exercises: RoutineExercise[] =
   return routine
 }
 
-/** Saves the whole routine (the editor auto-saves after every change). */
+export const UNTITLED_ROUTINE = 'Untitled routine'
+
+/**
+ * Saves the whole routine (the editor auto-saves after every change).
+ * Refuses (StaleRoutineError) if the routine was deleted meanwhile, so a late auto-save
+ * can't bring it back.
+ */
 export async function saveRoutine(routine: Routine): Promise<Routine> {
-  const saved = { ...routine, updatedAt: nowIso() }
-  await db.routines.put(saved)
-  return saved
+  return db.transaction('rw', db.routines, async () => {
+    if (!(await db.routines.get(routine.id))) throw new StaleRoutineError()
+    const saved = { ...routine, name: routine.name.trim() || UNTITLED_ROUTINE, updatedAt: nowIso() }
+    await db.routines.put(saved)
+    return saved
+  })
+}
+
+export class StaleRoutineError extends Error {
+  constructor() {
+    super('This routine was deleted — change not saved')
+    this.name = 'StaleRoutineError'
+  }
 }
 
 export async function duplicateRoutine(id: ID): Promise<Routine> {

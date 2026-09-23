@@ -213,7 +213,7 @@ The order builds the **thinnest complete flow first** (phases 0–5), then deepe
 - [x] **0. Project setup** — Vite + React + TS, oxlint, Vitest, Playwright, PWA plugin, tab shell with 4 empty tabs, base styles (large tap targets ≥ 48px, readable 16px+ text, light/dark).
 - [x] **1. Data layer** — types, Dexie schema, unit conversion, seed library (~80 common exercises), functions for routines/workouts/settings. Unit tests for conversion, suggestions, volume, PRs.
 - [x] **2. Exercise library + picker** — search, filters, recent, custom exercise create/edit/archive.
-- [ ] **3. Routines** — list, editor with reorder, duplicate, delete.
+- [x] **3. Routines** — list, editor with reorder, duplicate, delete. (Reorder: drag handle or ⋯ → Move up/down. Automated tests use the menu; finger-drag was checked by hand — simulated touch drags are unreliable in WebKit.)
 - [ ] **4. Active workout (core)** — start from routine or empty; set rows with suggestions and ✓; add/remove sets; add/replace/remove/reorder exercises; notes; undo; auto-save; resume after reload; finish + summary. Also: add an icon-only `IconButton` (button version of `IconLink`, same 48px style); switch app updates from `autoUpdate` to prompt-based so a new version never reloads the page during a workout.
 - [ ] **5. History (basic)** — list + workout detail. ✅ *Milestone: full flow works end-to-end.* Playwright test covers it.
 - [ ] **6. Rest timer** — auto-start, pause, skip, ±15s, survives reload; vibration/sound where supported.

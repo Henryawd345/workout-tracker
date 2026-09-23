@@ -24,9 +24,13 @@ describe('useDebouncedSave', () => {
     const save = vi.fn(async () => {})
     const { result } = renderHook(() => useDebouncedSave(save, 500))
     act(() => result.current.schedule('x'))
-    act(() => result.current.flush())
+    act(() => {
+      void result.current.flush()
+    })
     vi.advanceTimersByTime(1000)
-    act(() => result.current.flush())
+    act(() => {
+      void result.current.flush()
+    })
     expect(save).toHaveBeenCalledExactlyOnceWith('x')
   })
 
@@ -52,6 +56,16 @@ describe('useDebouncedSave', () => {
     expect(save).toHaveBeenLastCalledWith('closed')
     expect(save).toHaveBeenCalledTimes(2)
     delete (document as { visibilityState?: unknown }).visibilityState
+  })
+
+  it('cancel drops the pending save, even on unmount', () => {
+    const save = vi.fn(async () => {})
+    const { result, unmount } = renderHook(() => useDebouncedSave(save, 500))
+    act(() => result.current.schedule('doomed'))
+    act(() => result.current.cancel())
+    vi.advanceTimersByTime(1000)
+    unmount()
+    expect(save).not.toHaveBeenCalled()
   })
 
   it('uses the latest save function', () => {

@@ -1,0 +1,66 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: var(--space-2) var(--space-2) calc(var(--space-2) + var(--safe-bottom));
+  background: rgb(0 0 0 / 0.45);
+  overscroll-behavior: contain;
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 480px;
+}
+
+.group {
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.title {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  text-align: center;
+}
+
+.action,
+.cancel {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  border: none;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: var(--font-lg);
+}
+
+.action + .action {
+  border-top: 1px solid var(--border);
+}
+
+.action:disabled {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.destructive {
+  color: var(--danger);
+}
+
+.cancel {
+  font-weight: 700;
+}
+
+.action:not(:disabled):active,
+.cancel:active {
+  background: var(--surface-2);
+}

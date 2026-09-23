@@ -29,6 +29,20 @@ export function formatWeight(value: number, from: WeightUnit, displayUnit: Weigh
   return `${formatNumber(displayWeight(value, from, displayUnit))} ${displayUnit}`
 }
 
+/**
+ * Reads a time typed by the user: "90" (seconds), "1:30", "1:02:03".
+ * Returns null for empty or invalid input.
+ */
+export function parseDuration(text: string): number | null {
+  const t = text.trim()
+  if (!t) return null
+  if (!/^\d+(:\d{1,2}){0,2}$/.test(t)) return null
+  const parts = t.split(':').map(Number)
+  if (parts.slice(1).some((p) => p >= 60)) return null
+  const total = parts.reduce((sum, p) => sum * 60 + p, 0)
+  return total > 0 ? total : null
+}
+
 /** 75 → "1:15", 3600 → "1:00:00" */
 export function formatDuration(totalSec: number): string {
   const s = Math.max(0, Math.round(totalSec))

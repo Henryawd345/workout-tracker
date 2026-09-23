@@ -16,14 +16,14 @@ export function Modal({ children, ...rest }: ModalProps) {
 
   useEffect(() => {
     const modal = ref.current
-    const host = modal?.parentElement
-    if (!modal || !host) return
+    if (!modal) return
     const previouslyFocused = document.activeElement as HTMLElement | null
 
-    // Make every other top-level element inert, remembering which ones we changed.
+    // Make every other top-level element inert (never the modal itself — it is portalled
+    // straight into <body>), remembering which ones we changed.
     const changed: Element[] = []
     for (const el of Array.from(document.body.children)) {
-      if (el !== host && !el.hasAttribute('inert')) {
+      if (el !== modal && !el.hasAttribute('inert')) {
         el.setAttribute('inert', '')
         changed.push(el)
       }

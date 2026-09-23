@@ -6,6 +6,7 @@ import {
   formatNumber,
   formatWeight,
   KG_PER_LB,
+  parseDuration,
   round1,
 } from './units.ts'
 
@@ -35,6 +36,21 @@ describe('weight conversion', () => {
 
   it('handles zero (bodyweight)', () => {
     expect(displayWeight(0, 'lb', 'kg')).toBe(0)
+  })
+})
+
+describe('parseDuration', () => {
+  it('reads seconds, m:ss and h:mm:ss', () => {
+    expect(parseDuration('90')).toBe(90)
+    expect(parseDuration('1:30')).toBe(90)
+    expect(parseDuration(' 0:45 ')).toBe(45)
+    expect(parseDuration('1:02:03')).toBe(3723)
+  })
+
+  it('rejects empty, zero and malformed input', () => {
+    for (const bad of ['', '  ', '0', '0:00', 'abc', '1:75', '1:2:3:4', '-5', '1.5']) {
+      expect(parseDuration(bad), bad).toBeNull()
+    }
   })
 })
 

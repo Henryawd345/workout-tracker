@@ -12,6 +12,7 @@ import {
   getActiveWorkout,
   getExerciseHistory,
   getLastPerformance,
+  getRoutinesLastPerformed,
   listCompletedWorkouts,
   listRecentExerciseIds,
   newWorkoutExercise,
@@ -234,6 +235,18 @@ describe('history lookups', () => {
     await saveWorkout(w)
     expect(await listRecentExerciseIds()).toEqual(['ex-plank', 'ex-deadlift', 'ex-back-squat'])
     expect(await listRecentExerciseIds(2)).toEqual(['ex-plank', 'ex-deadlift'])
+  })
+
+  it('knows when each routine was last done (finished workouts only)', async () => {
+    await addCompletedWorkout('2026-09-02T10:00:00Z', [makeExercise('ex-plank', [])], { routineId: 'push' })
+    await addCompletedWorkout('2026-09-09T10:00:00Z', [makeExercise('ex-plank', [])], { routineId: 'push' })
+    await addCompletedWorkout('2026-09-05T10:00:00Z', [makeExercise('ex-plank', [])], { routineId: 'legs' })
+    const routine = await createRoutine('Pull')
+    await startWorkout({ routineId: routine.id })
+    expect(await getRoutinesLastPerformed()).toEqual({
+      push: '2026-09-09T10:00:00Z',
+      legs: '2026-09-05T10:00:00Z',
+    })
   })
 
   it('returns null for an exercise never done', async () => {

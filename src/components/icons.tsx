@@ -102,6 +102,29 @@ export function ChevronRightIcon(props: IconProps) {
   )
 }
 
+export function MoreIcon(props: IconProps) {
+  return (
+    <Svg {...props} fill="currentColor" stroke="none">
+      <circle cx="5" cy="12" r="2" />
+      <circle cx="12" cy="12" r="2" />
+      <circle cx="19" cy="12" r="2" />
+    </Svg>
+  )
+}
+
+export function GripIcon(props: IconProps) {
+  return (
+    <Svg {...props} fill="currentColor" stroke="none">
+      <circle cx="9" cy="6" r="1.6" />
+      <circle cx="15" cy="6" r="1.6" />
+      <circle cx="9" cy="12" r="1.6" />
+      <circle cx="15" cy="12" r="1.6" />
+      <circle cx="9" cy="18" r="1.6" />
+      <circle cx="15" cy="18" r="1.6" />
+    </Svg>
+  )
+}
+
 export function BackIcon(props: IconProps) {
   return (
     <Svg {...props}>

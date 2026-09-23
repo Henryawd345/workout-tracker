@@ -1,0 +1,124 @@
+.card {
+  position: relative;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  list-style: none;
+}
+
+.dragging {
+  z-index: 10;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+  opacity: 0.95;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--tap);
+  height: var(--tap);
+  margin-left: calc(-1 * var(--space-2));
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  /* The browser must not scroll when a drag starts on the handle. */
+  touch-action: none;
+  cursor: grab;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--font-md);
+  font-weight: 700;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+}
+
+.sets {
+  width: 100%;
+  margin-top: var(--space-2);
+  border-collapse: separate;
+  border-spacing: var(--space-2) var(--space-1);
+  table-layout: fixed;
+}
+
+.sets th {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.sets th:first-child,
+.setNumber {
+  width: 40px;
+  text-align: center;
+}
+
+.sets th:last-child,
+.removeCell {
+  width: var(--tap);
+}
+
+.setNumber {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.removeCell button {
+  color: var(--text-muted);
+}
+
+.removeCell button:disabled {
+  opacity: 0.3;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.rest {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+}
+
+.rest select {
+  min-height: var(--tap);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -6,6 +6,9 @@ v1 goal: one complete, reliable flow —
 **create a routine → start it → log sets → finish → see it in History and Progress.**
 Out of scope for v1: AI coaching, social features, smartwatch, cloud sync, accounts.
 
+**Future ideas (not planned yet):**
+- **Progressive overload tracker** — per exercise, a rule for when to go heavier (e.g. "hit all target reps on every set → add 2.5 kg next time"), suggestions that follow it, and a view of which exercises are progressing, stalled or ready to increase. Builds on the existing suggestions, routine targets and Progress charts.
+
 ---
 
 ## 1. Key decisions

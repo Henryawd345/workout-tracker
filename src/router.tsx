@@ -10,6 +10,7 @@ import { RoutineEditorScreen } from './screens/RoutineEditorScreen.tsx'
 import { RoutinesScreen } from './screens/RoutinesScreen.tsx'
 import { SettingsScreen } from './screens/SettingsScreen.tsx'
 import { TodayScreen } from './screens/TodayScreen.tsx'
+import { WorkoutDetailScreen } from './screens/WorkoutDetailScreen.tsx'
 import { WorkoutSummaryScreen } from './screens/WorkoutSummaryScreen.tsx'
 
 export const routes: RouteObject[] = [
@@ -27,6 +28,7 @@ export const routes: RouteObject[] = [
       { path: 'routines/exercises/:id', element: <ExerciseDetailScreen /> },
       { path: 'routines/:id', element: <RoutineEditorScreen /> },
       { path: 'history', element: <HistoryScreen /> },
+      { path: 'history/:id', element: <WorkoutDetailScreen /> },
       { path: 'progress', element: <ProgressScreen /> },
       { path: 'settings', element: <SettingsScreen /> },
       { path: '*', element: <Navigate to="/today" replace /> },

@@ -63,6 +63,14 @@ test('core flow: routine → start → log → reload → finish → summary', a
   await expect(page.getByText('1:00', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Done' }).tap()
   await expect(page.getByText('1 workout this week.')).toBeVisible()
+
+  // …and it's in History with every set (milestone: the full flow works end to end)
+  await page.getByRole('link', { name: 'History' }).tap()
+  await page.getByRole('link', { name: /Full Body/ }).tap()
+  await expect(page.getByRole('heading', { name: 'Full Body' })).toBeVisible()
+  const squatLog = page.getByRole('listitem', { name: 'Back Squat' })
+  await expect(squatLog.getByText('60×8 kg')).toHaveCount(2)
+  await expect(page.getByRole('listitem', { name: 'Plank' }).getByText('1:00')).toBeVisible()
 })
 
 test('second session: one tap per set using last time', async ({ page }) => {

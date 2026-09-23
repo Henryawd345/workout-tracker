@@ -24,7 +24,7 @@
   background: var(--surface);
 }
 
-.list li + li {
+.list > li + li {
   border-top: 1px solid var(--border);
 }
 
@@ -63,5 +63,12 @@
   flex-shrink: 0;
   width: 20px;
   height: 20px;
+  color: var(--text-muted);
+}
+
+.restDay {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
   color: var(--text-muted);
 }

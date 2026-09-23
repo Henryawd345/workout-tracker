@@ -217,7 +217,7 @@ The order builds the **thinnest complete flow first** (phases 0–5), then deepe
 - [x] **4. Active workout (core)** — start from routine or empty; set rows with suggestions and ✓; add/remove sets; add/replace/remove/reorder exercises; notes; undo; auto-save; resume after reload; finish + summary. Also: add an icon-only `IconButton` (button version of `IconLink`, same 48px style); switch app updates from `autoUpdate` to prompt-based so a new version never reloads the page during a workout.
 - [x] **5. History (basic)** — list + workout detail. ✅ *Milestone: full flow works end-to-end.* Playwright test covers it.
 - [x] **6. Rest timer** — auto-start, pause, skip, ±15s, survives reload; vibration/sound where supported.
-- [ ] **7. History (full)** — calendar view, edit past workouts, delete.
+- [x] **7. History (full)** — calendar view, edit past workouts, delete.
 - [ ] **8. Progress** — per-exercise charts, time ranges, PRs, workouts-per-week.
 - [ ] **9. Settings & data** — units, rest defaults, export JSON/CSV, import JSON, delete all.
 - [ ] **10. Reliability & polish** — (if History gets slow with years of data: store per-workout summary fields or page the list) — offline check (airplane mode), persistent storage request, install prompt, accessibility pass, final full test + review.

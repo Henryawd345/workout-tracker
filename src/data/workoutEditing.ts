@@ -123,6 +123,29 @@ export function restoreWorkoutExercise(w: Workout, item: WorkoutExercise): Worko
   return touched ? null : mapExercise(w, item.id, () => item)
 }
 
+// History corrections
+
+/** Moves a finished workout to a new start time and length. */
+export function setWorkoutTimes(w: Workout, startedAt: string, durationSec: number): Workout {
+  const start = Date.parse(startedAt)
+  return {
+    ...w,
+    startedAt: new Date(start).toISOString(),
+    endedAt: new Date(start + Math.max(60, durationSec) * 1000).toISOString(),
+  }
+}
+
+/**
+ * After editing a past workout: drop sets that aren't ticked and exercises left with none —
+ * the same clean-up as finishing a workout. `empty` means nothing is left.
+ */
+export function tidyFinishedWorkout(w: Workout): { workout: Workout; empty: boolean } {
+  const exercises = w.exercises
+    .map((e) => ({ ...e, sets: e.sets.filter((s) => s.completed) }))
+    .filter((e) => e.sets.length > 0)
+  return { workout: { ...w, exercises }, empty: exercises.length === 0 }
+}
+
 export function renameWorkout(w: Workout, name: string): Workout {
   return { ...w, name }
 }

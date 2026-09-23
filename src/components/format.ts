@@ -39,6 +39,29 @@ export function formatDate(iso: string, now: Date = new Date()): string {
   })
 }
 
+const pad = (n: number) => String(n).padStart(2, '0')
+
+/** Value for <input type="date"> in local time: "2026-09-23". */
+export function toDateInputValue(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+/** Value for <input type="time"> in local time: "18:05". */
+export function toTimeInputValue(iso: string): string {
+  const d = new Date(iso)
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+/** Local date + time inputs back to an ISO timestamp; null if either is incomplete. */
+export function fromDateTimeInputs(date: string, time: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return null
+  const [y, m, d] = date.split('-').map(Number)
+  const [h, min] = time.split(':').map(Number)
+  const result = new Date(y, m - 1, d, h, min)
+  return Number.isNaN(result.getTime()) ? null : result.toISOString()
+}
+
 /** "14:05" or "2:05 PM" depending on the phone's settings. */
 export function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })

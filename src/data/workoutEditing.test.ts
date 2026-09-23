@@ -14,6 +14,8 @@ import {
   replaceWorkoutExercise,
   restoreWorkoutExercise,
   setCounts,
+  setWorkoutTimes,
+  tidyFinishedWorkout,
   toggleWorkoutSet,
   updateWorkoutSet,
 } from './workoutEditing.ts'
@@ -126,6 +128,21 @@ describe('workout editing', () => {
     let next = replaceWorkoutExercise(w, before.id, 'ex-b', 'kg')
     next = updateWorkoutSet(next, before.id, next.exercises[0].sets[0].id, { reps: 10 })
     expect(restoreWorkoutExercise(next, before)).toBeNull()
+  })
+
+  it('moves a past workout to a new time and length (at least a minute)', () => {
+    const moved = setWorkoutTimes(workout(), '2026-09-01T18:30:00.000Z', 3900)
+    expect(moved.startedAt).toBe('2026-09-01T18:30:00.000Z')
+    expect(moved.endedAt).toBe('2026-09-01T19:35:00.000Z')
+    expect(setWorkoutTimes(workout(), '2026-09-01T18:30:00.000Z', 0).endedAt).toBe('2026-09-01T18:31:00.000Z')
+  })
+
+  it('tidies an edited workout like finishing does', () => {
+    const w = workout([makeExercise('ex-a', [done(1, 1), makeSet()]), makeExercise('ex-b', [makeSet()])])
+    const { workout: tidy, empty } = tidyFinishedWorkout(w)
+    expect(empty).toBe(false)
+    expect(tidy.exercises.map((e) => [e.exerciseId, e.sets.length])).toEqual([['ex-a', 1]])
+    expect(tidyFinishedWorkout(workout([makeExercise('ex-a', [makeSet()])])).empty).toBe(true)
   })
 
   it('counts sets and finds which appearance of an exercise a card is', () => {

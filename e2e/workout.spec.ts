@@ -105,4 +105,19 @@ test('second session: one tap per set using last time', async ({ page }) => {
     await page.getByRole('button', { name: 'Done' }).tap()
   }
   await expect(page.getByText('2 workouts this week.')).toBeVisible()
+
+  // Calendar → today → correct a set in the latest workout
+  await page.getByRole('link', { name: 'History' }).tap()
+  await page.locator('label', { hasText: 'Calendar' }).tap()
+  await expect(page.getByRole('group', { name: /^Days in/ })).toBeVisible()
+  await page.getByRole('button', { name: /, 2 workouts$/ }).tap()
+  await page.getByRole('list', { name: /^Workouts on/ }).getByRole('link').last().tap()
+  await page.getByRole('button', { name: 'Workout actions' }).tap()
+  await page.getByRole('menuitem', { name: 'Edit workout' }).tap()
+
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  expect(overflow).toBe(0)
+  await squat.getByRole('textbox', { name: 'Set 3 reps' }).fill('4')
+  await page.getByRole('button', { name: 'Done', exact: true }).tap()
+  await expect(page.getByRole('listitem', { name: 'Back Squat' }).getByText('100×4 kg')).toBeVisible()
 })

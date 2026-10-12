@@ -159,19 +159,27 @@ export interface ExerciseImportPlan {
   skipped: { name: string; reason: 'exists' | 'duplicate' | 'too_long' }[]
 }
 
+/** Pasted text → names, one per line, without list markers ("-", "•", "3.") or extra spaces. */
+export function parseNameList(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) =>
+      line
+        .replace(/^\s*(?:[-*•–]\s*|\d+[.)]\s+)/, '')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    )
+    .filter(Boolean)
+}
+
 /**
- * Turns pasted text (one name per line) into names to create. Strips list markers such as
- * "-", "•" or "3.", and skips names already in the library, repeated in the paste, or too long.
+ * Turns pasted text (one name per line) into names to create, skipping names already in
+ * the library, repeated in the paste, or too long.
  */
 export function planExerciseImport(text: string, existing: Exercise[]): ExerciseImportPlan {
   const taken = new Set(existing.filter((e) => !e.archived).map((e) => e.name.toLowerCase()))
   const plan: ExerciseImportPlan = { toAdd: [], skipped: [] }
-  for (const line of text.split(/\r?\n/)) {
-    const name = line
-      .replace(/^\s*(?:[-*•–]\s*|\d+[.)]\s+)/, '')
-      .replace(/\s+/g, ' ')
-      .trim()
-    if (!name) continue
+  for (const name of parseNameList(text)) {
     const lower = name.toLowerCase()
     if (name.length > MAX_EXERCISE_NAME) plan.skipped.push({ name, reason: 'too_long' })
     else if (plan.toAdd.some((n) => n.toLowerCase() === lower)) plan.skipped.push({ name, reason: 'duplicate' })
@@ -208,5 +216,91 @@ export async function importExercises(
     }))
     await db.exercises.bulkAdd(added)
     return { added, plan }
+  })
+}
+
+export interface ExerciseListPlan {
+  /** In pasted order. `exercise` is the library match; without one, the name will be created. */
+  items: { name: string; exercise?: Exercise }[]
+  /** Names that can't be created because they are too long. */
+  tooLong: string[]
+  /** How many exercises will be created (a new name listed twice is created once). */
+  newCount: number
+}
+
+/**
+ * Key for matching pasted names: ignores case, accents and punctuation, so "pull up" finds
+ * "Pull-Up". Names with no letters or digits fall back to plain lower case.
+ */
+function listKey(name: string): string {
+  const key = name
+    .normalize('NFKD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+  return key || name.toLowerCase()
+}
+
+/**
+ * Matches pasted names (one per line) to the library — an exact match (ignoring case) first,
+ * else one that differs only in accents or punctuation. Archived exercises are not matched.
+ */
+export function planExerciseList(text: string, existing: Exercise[]): ExerciseListPlan {
+  const active = existing.filter((e) => !e.archived)
+  const exact = new Map(active.map((e) => [e.name.toLowerCase(), e]))
+  const loose = new Map(active.map((e) => [listKey(e.name), e]))
+  const plan: ExerciseListPlan = { items: [], tooLong: [], newCount: 0 }
+  const newKeys = new Set<string>()
+  for (const name of parseNameList(text)) {
+    const exercise = exact.get(name.toLowerCase()) ?? loose.get(listKey(name))
+    if (!exercise && name.length > MAX_EXERCISE_NAME) {
+      plan.tooLong.push(name)
+      continue
+    }
+    plan.items.push({ name, exercise })
+    if (!exercise) newKeys.add(listKey(name))
+  }
+  plan.newCount = newKeys.size
+  return plan
+}
+
+/**
+ * Exercise ids for a pasted list, in order — for adding to a routine. Names not in the
+ * library are created as custom exercises with the given details (all or nothing).
+ */
+export async function resolveExerciseList(
+  text: string,
+  defaults: Omit<NewExercise, 'name' | 'note'>,
+): Promise<{ exerciseIds: ID[]; created: Exercise[] }> {
+  return db.transaction('rw', db.exercises, async () => {
+    const plan = planExerciseList(text, await db.exercises.toArray())
+    const created = new Map<string, Exercise>()
+    const now = nowIso()
+    const exerciseIds = plan.items.map(({ name, exercise }) => {
+      if (exercise) return exercise.id
+      // The same new name twice in the list → one exercise, added twice.
+      const key = listKey(name)
+      let made = created.get(key)
+      if (!made) {
+        made = {
+          id: newId(),
+          name,
+          muscleGroups: [...defaults.muscleGroups],
+          equipment: defaults.equipment,
+          trackingType: defaults.trackingType,
+          note: '',
+          isCustom: true,
+          archived: false,
+          createdAt: now,
+          updatedAt: now,
+        }
+        created.set(key, made)
+      }
+      return made.id
+    })
+    if (created.size > 0 && defaults.muscleGroups.length === 0) throw new Error('Pick at least one muscle group')
+    await db.exercises.bulkAdd([...created.values()])
+    return { exerciseIds, created: [...created.values()] }
   })
 }

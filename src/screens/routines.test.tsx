@@ -210,3 +210,44 @@ describe('routine editor', () => {
     expect(await screen.findByText('Routine not found')).toBeInTheDocument()
   })
 })
+
+describe('pasting a list into a routine', () => {
+  it('adds library matches and new exercises in the pasted order', async () => {
+    const r = await createRoutine('Pull')
+    renderApp(`/routines/${r.id}`)
+    await userEvent.click(await screen.findByRole('button', { name: 'Paste a list of exercises' }))
+    const sheet = await screen.findByRole('dialog', { name: 'Paste a list' })
+    await userEvent.type(within(sheet).getByRole('textbox', { name: 'Exercise names' }), '1. pull up{Enter}2. Kelso Shrug')
+
+    const preview = within(sheet).getByRole('region', { name: 'Preview' })
+    expect(within(preview).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Pull-Up', 'Kelso ShrugNew'])
+
+    // The new exercise needs a muscle group
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Add (2)' }))
+    expect(await within(sheet).findByRole('alert')).toHaveTextContent('Pick at least one muscle group')
+    await userEvent.click(within(within(sheet).getByRole('group', { name: 'Muscle groups' })).getByRole('button', { name: 'Back' }))
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Add (2)' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    const list = screen.getByRole('list', { name: 'Exercises' })
+    expect(await within(list).findByText('Kelso Shrug')).toBeInTheDocument()
+    await waitFor(async () => {
+      const saved = await getRoutine(r.id)
+      expect(saved?.exercises.map((e) => e.exerciseId)[0]).toBe('ex-pull-up')
+      expect(saved?.exercises).toHaveLength(2)
+    })
+    const shrug = await db.exercises.filter((e) => e.name === 'Kelso Shrug').first()
+    expect(shrug).toMatchObject({ muscleGroups: ['back'], isCustom: true })
+  })
+
+  it('needs no setup when every name is already in the library', async () => {
+    const r = await createRoutine('Pull')
+    renderApp(`/routines/${r.id}`)
+    await userEvent.click(await screen.findByRole('button', { name: 'Paste a list of exercises' }))
+    const sheet = await screen.findByRole('dialog', { name: 'Paste a list' })
+    await userEvent.type(within(sheet).getByRole('textbox', { name: 'Exercise names' }), 'Pull-Up')
+    expect(within(sheet).queryByRole('group', { name: 'Muscle groups' })).not.toBeInTheDocument()
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Add (1)' }))
+    await waitFor(async () => expect((await getRoutine(r.id))?.exercises).toHaveLength(1))
+  })
+})

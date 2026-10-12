@@ -7,7 +7,9 @@ import {
   isExerciseLogged,
   listExercises,
   planExerciseImport,
+  planExerciseList,
   removeCustomExercise,
+  resolveExerciseList,
   restoreExercise,
   searchExercises,
   updateExercise,
@@ -228,6 +230,47 @@ describe('importing a pasted list', () => {
 
   it('needs a muscle group', async () => {
     await expect(importExercises('Kelso Shrug', { ...defaults, muscleGroups: [] })).rejects.toThrow('muscle group')
+    expect(await db.exercises.count()).toBe(SEED_EXERCISES.length)
+  })
+})
+
+describe('pasting a list into a routine', () => {
+  const defaults = { muscleGroups: ['back' as const], equipment: 'cable' as const, trackingType: 'weight_reps' as const }
+
+  it('matches library names ignoring case and punctuation, in pasted order', () => {
+    const plan = planExerciseList(`- pull up\nKelso Shrug\nBARBELL BENCH PRESS\n${'x'.repeat(61)}`, SEED_EXERCISES)
+    expect(plan.items.map((i) => [i.name, i.exercise?.id])).toEqual([
+      ['pull up', 'ex-pull-up'],
+      ['Kelso Shrug', undefined],
+      ['BARBELL BENCH PRESS', 'ex-barbell-bench-press'],
+    ])
+    expect(plan.tooLong).toHaveLength(1)
+  })
+
+  it('prefers an exact match and keeps names in other scripts apart', () => {
+    const custom = { ...SEED_EXERCISES[0], id: 'custom', name: 'Pull Up' }
+    expect(planExerciseList('pull up', [...SEED_EXERCISES, custom]).items[0].exercise?.id).toBe('custom')
+    expect(planExerciseList('Pull-Up', [custom, ...SEED_EXERCISES]).items[0].exercise?.id).toBe('ex-pull-up')
+    const plan = planExerciseList('Жим лёжа\nПодтягивания\nPull up\npull-up\nKelso Shrug', [])
+    expect(plan.newCount).toBe(4)
+  })
+
+  it('does not match archived exercises', () => {
+    const archived = { ...SEED_EXERCISES[0], name: 'Old Move', archived: true }
+    expect(planExerciseList('Old Move', [archived]).items[0].exercise).toBeUndefined()
+  })
+
+  it('returns ids in order and creates each new name once', async () => {
+    const { exerciseIds, created } = await resolveExerciseList('Pull-Up\nKelso Shrug\nkelso shrug', defaults)
+    expect(created.map((e) => e.name)).toEqual(['Kelso Shrug'])
+    expect(exerciseIds).toEqual(['ex-pull-up', created[0].id, created[0].id])
+    expect(await db.exercises.get(created[0].id)).toMatchObject({ ...defaults, isCustom: true })
+  })
+
+  it('needs a muscle group only when something new is created', async () => {
+    const noMuscle = { ...defaults, muscleGroups: [] }
+    expect((await resolveExerciseList('Pull-Up', noMuscle)).exerciseIds).toEqual(['ex-pull-up'])
+    await expect(resolveExerciseList('Pull-Up\nKelso Shrug', noMuscle)).rejects.toThrow('muscle group')
     expect(await db.exercises.count()).toBe(SEED_EXERCISES.length)
   })
 })

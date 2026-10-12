@@ -20,6 +20,7 @@ import { ExercisePicker } from '../components/exercises/ExercisePicker.tsx'
 import { TextAreaField, TextField } from '../components/Fields.tsx'
 import { IconButton } from '../components/IconButton.tsx'
 import { MoreIcon, PlusIcon } from '../components/icons.tsx'
+import { PasteExerciseList } from '../components/routines/PasteExerciseList.tsx'
 import { RoutineExerciseCard } from '../components/routines/RoutineExerciseCard.tsx'
 import { EmptyState, Screen } from '../components/Screen.tsx'
 import {
@@ -69,6 +70,7 @@ function RoutineEditor({ initial, initialSettings }: { initial: Routine; initial
   const isNew = params.get('new') === '1'
   const [routine, setRoutine] = useState(initial)
   const [picking, setPicking] = useState(false)
+  const [pasting, setPasting] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -210,6 +212,9 @@ function RoutineEditor({ initial, initialSettings }: { initial: Routine; initial
       <Button variant="primary" block onClick={() => setPicking(true)}>
         <PlusIcon aria-hidden="true" /> Add exercises
       </Button>
+      <Button variant="ghost" block onClick={() => setPasting(true)}>
+        Paste a list of exercises
+      </Button>
       <p className={styles.hint}>Changes save automatically. Targets are optional — last session’s numbers are suggested when you train.</p>
 
       {picking && (
@@ -219,6 +224,16 @@ function RoutineEditor({ initial, initialSettings }: { initial: Routine; initial
           onDone={(picked) => {
             setPicking(false)
             update(addRoutineExercises(routine, picked.map((e) => e.id), settings.defaultRestSec))
+          }}
+        />
+      )}
+
+      {pasting && (
+        <PasteExerciseList
+          onCancel={() => setPasting(false)}
+          onDone={(ids) => {
+            setPasting(false)
+            update(addRoutineExercises(routine, ids, settings.defaultRestSec))
           }}
         />
       )}

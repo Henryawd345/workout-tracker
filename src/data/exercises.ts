@@ -152,3 +152,61 @@ export async function restoreExercise(id: ID): Promise<void> {
     await db.exercises.update(id, { archived: false, updatedAt: nowIso() })
   })
 }
+
+export interface ExerciseImportPlan {
+  /** Names that will be created, in the order they were pasted. */
+  toAdd: string[]
+  skipped: { name: string; reason: 'exists' | 'duplicate' | 'too_long' }[]
+}
+
+/**
+ * Turns pasted text (one name per line) into names to create. Strips list markers such as
+ * "-", "•" or "3.", and skips names already in the library, repeated in the paste, or too long.
+ */
+export function planExerciseImport(text: string, existing: Exercise[]): ExerciseImportPlan {
+  const taken = new Set(existing.filter((e) => !e.archived).map((e) => e.name.toLowerCase()))
+  const plan: ExerciseImportPlan = { toAdd: [], skipped: [] }
+  for (const line of text.split(/\r?\n/)) {
+    const name = line
+      .replace(/^\s*(?:[-*•–]\s*|\d+[.)]\s+)/, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+    if (!name) continue
+    const lower = name.toLowerCase()
+    if (name.length > MAX_EXERCISE_NAME) plan.skipped.push({ name, reason: 'too_long' })
+    else if (plan.toAdd.some((n) => n.toLowerCase() === lower)) plan.skipped.push({ name, reason: 'duplicate' })
+    else if (taken.has(lower)) plan.skipped.push({ name, reason: 'exists' })
+    else plan.toAdd.push(name)
+  }
+  return plan
+}
+
+/**
+ * Creates a custom exercise for every new name in the pasted text, all with the same muscle
+ * groups, equipment and tracking type (each can be edited afterwards). All or nothing.
+ */
+export async function importExercises(
+  text: string,
+  defaults: Omit<NewExercise, 'name' | 'note'>,
+): Promise<{ added: Exercise[]; plan: ExerciseImportPlan }> {
+  if (defaults.muscleGroups.length === 0) throw new Error('Pick at least one muscle group')
+  return db.transaction('rw', db.exercises, async () => {
+    // Planned inside the transaction, so names added meanwhile are still caught.
+    const plan = planExerciseImport(text, await db.exercises.toArray())
+    const now = nowIso()
+    const added: Exercise[] = plan.toAdd.map((name) => ({
+      id: newId(),
+      name,
+      muscleGroups: [...defaults.muscleGroups],
+      equipment: defaults.equipment,
+      trackingType: defaults.trackingType,
+      note: '',
+      isCustom: true,
+      archived: false,
+      createdAt: now,
+      updatedAt: now,
+    }))
+    await db.exercises.bulkAdd(added)
+    return { added, plan }
+  })
+}

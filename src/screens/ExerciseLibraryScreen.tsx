@@ -1,13 +1,15 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
-import { Button } from '../components/Button.tsx'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router'
+import { Button, ButtonLink } from '../components/Button.tsx'
 import { ExerciseBrowser } from '../components/exercises/ExerciseBrowser.tsx'
 import type { BrowserFilter } from '../components/exercises/options.ts'
 import { ExerciseLinkRow, RowList } from '../components/exercises/ExerciseRow.tsx'
 import { IconLink } from '../components/IconButton.tsx'
 import { BackIcon, PlusIcon } from '../components/icons.tsx'
+import { plural } from '../components/format.ts'
 import { Screen } from '../components/Screen.tsx'
+import { Toast, type ToastMessage } from '../components/Toast.tsx'
 import {
   EQUIPMENT,
   listExercises,
@@ -35,6 +37,16 @@ export function ExerciseLibraryScreen() {
   const exercises = useLiveQuery(() => listExercises(), [])
   const recentIds = useLiveQuery(() => listRecentExerciseIds(), [], [])
   const [showArchived, setShowArchived] = useState(false)
+  // Set by the import screen when it sends you back here.
+  const location = useLocation()
+  const imported = (location.state as { imported?: number } | null)?.imported
+  const [toast, setToast] = useState<ToastMessage | null>(() =>
+    imported === undefined ? null : { id: Date.now(), text: `${plural(imported, 'exercise')} added` },
+  )
+  // Forget it, so going back to this page later doesn't show the message again.
+  useEffect(() => {
+    if (imported !== undefined) navigate({ search: location.search }, { replace: true, state: null })
+  }, [imported, location.search, navigate])
 
   const active = exercises?.filter((e) => !e.archived)
   const archived = exercises?.filter((e) => e.archived) ?? []
@@ -74,6 +86,10 @@ export function ExerciseLibraryScreen() {
         renderRow={(e) => <ExerciseLinkRow exercise={e} to={`/routines/exercises/${e.id}`} />}
       />
 
+      <ButtonLink to="/routines/exercises/import" variant="ghost" block>
+        Import a list of exercises
+      </ButtonLink>
+
       {archived.length > 0 && (
         <section aria-label="Archived exercises">
           <Button variant="ghost" onClick={() => setShowArchived((s) => !s)} aria-expanded={showArchived}>
@@ -88,6 +104,7 @@ export function ExerciseLibraryScreen() {
           )}
         </section>
       )}
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
     </Screen>
   )
 }

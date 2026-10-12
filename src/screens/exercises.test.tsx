@@ -229,3 +229,36 @@ describe('exercise detail', () => {
     expect(await screen.findByText('Exercise not found')).toBeInTheDocument()
   })
 })
+
+describe('importing a list of exercises', () => {
+  it('adds every new name with the chosen details and says how many', async () => {
+    renderApp('/routines/exercises/new')
+    await userEvent.click(await screen.findByRole('link', { name: /Import several at once/ }))
+    const names = await screen.findByRole('textbox', { name: 'Exercise names' })
+    await userEvent.type(names, '- Kelso Shrug{Enter}2. Meadows Row{Enter}Barbell Bench Press')
+
+    const skipped = await screen.findByRole('region', { name: 'Skipped' })
+    expect(within(skipped).getByText(/Barbell Bench Press — already in your library/)).toBeInTheDocument()
+
+    // A muscle group is required
+    await userEvent.click(screen.getByRole('button', { name: 'Import 2 exercises' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Pick at least one muscle group')
+
+    await userEvent.click(within(screen.getByRole('group', { name: 'Muscle groups' })).getByRole('button', { name: 'Back' }))
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Equipment' }), 'Dumbbell')
+    await userEvent.click(screen.getByRole('button', { name: 'Import 2 exercises' }))
+
+    expect(await screen.findByText('2 exercises added')).toBeInTheDocument()
+    const list = await allList()
+    expect(await within(list).findByText('Kelso Shrug')).toBeInTheDocument()
+    expect(within(list).getByText('Meadows Row')).toBeInTheDocument()
+    const stored = await db.exercises.filter((e) => e.name === 'Meadows Row').first()
+    expect(stored).toMatchObject({ muscleGroups: ['back'], equipment: 'dumbbell', isCustom: true })
+  })
+
+  it('opens from the exercise library', async () => {
+    renderApp('/routines/exercises')
+    await userEvent.click(await screen.findByRole('link', { name: 'Import a list of exercises' }))
+    expect(await screen.findByRole('heading', { name: 'Import exercises' })).toBeInTheDocument()
+  })
+})

@@ -2,6 +2,7 @@ import { createHashRouter, Navigate, type RouteObject } from 'react-router'
 import { AppShell } from './components/AppShell.tsx'
 import { ActiveWorkoutScreen } from './screens/ActiveWorkoutScreen.tsx'
 import { ExerciseDetailScreen } from './screens/ExerciseDetailScreen.tsx'
+import { ExerciseImportScreen } from './screens/ExerciseImportScreen.tsx'
 import { ExerciseLibraryScreen } from './screens/ExerciseLibraryScreen.tsx'
 import { HistoryScreen } from './screens/HistoryScreen.tsx'
 import { NewExerciseScreen } from './screens/NewExerciseScreen.tsx'
@@ -26,6 +27,7 @@ export const routes: RouteObject[] = [
       { path: 'routines', element: <RoutinesScreen /> },
       { path: 'routines/exercises', element: <ExerciseLibraryScreen /> },
       { path: 'routines/exercises/new', element: <NewExerciseScreen /> },
+      { path: 'routines/exercises/import', element: <ExerciseImportScreen /> },
       { path: 'routines/exercises/:id', element: <ExerciseDetailScreen /> },
       { path: 'routines/:id', element: <RoutineEditorScreen /> },
       { path: 'history', element: <HistoryScreen /> },

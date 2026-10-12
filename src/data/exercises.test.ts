@@ -3,8 +3,10 @@ import { addCompletedWorkout, done, makeExercise, resetDb } from '../test/factor
 import { db, ensureSeedExercises } from './db.ts'
 import {
   createCustomExercise,
+  importExercises,
   isExerciseLogged,
   listExercises,
+  planExerciseImport,
   removeCustomExercise,
   restoreExercise,
   searchExercises,
@@ -180,5 +182,52 @@ describe('custom exercises', () => {
 
   it('built-in exercises cannot be removed', async () => {
     await expect(removeCustomExercise('ex-deadlift')).rejects.toThrow('Built-in')
+  })
+})
+
+describe('importing a pasted list', () => {
+  const defaults = { muscleGroups: ['back' as const], equipment: 'cable' as const, trackingType: 'weight_reps' as const }
+
+  it('reads one name per line, stripping list markers and extra spaces', () => {
+    const plan = planExerciseImport('- Kelso Shrug\n•  Straight-Arm   Pulldown\r\n\n3. Meadows Row\n4) Seal Row\n  \n', [])
+    expect(plan.toAdd).toEqual(['Kelso Shrug', 'Straight-Arm Pulldown', 'Meadows Row', 'Seal Row'])
+    expect(plan.skipped).toEqual([])
+  })
+
+  it('keeps numbers that are part of the name', () => {
+    expect(planExerciseImport('1.5 Rep Squat\n21s Curl\n1. 1.5 Rep Squat', []).toAdd).toEqual([
+      '1.5 Rep Squat',
+      '21s Curl',
+    ])
+  })
+
+  it('skips names already in the library, repeated in the paste, or too long', () => {
+    const plan = planExerciseImport(
+      `barbell bench press\nKelso Shrug\nkelso shrug\n${'x'.repeat(61)}`,
+      SEED_EXERCISES,
+    )
+    expect(plan.toAdd).toEqual(['Kelso Shrug'])
+    expect(plan.skipped.map((s) => s.reason)).toEqual(['exists', 'duplicate', 'too_long'])
+  })
+
+  it('does not treat an archived exercise as taken', () => {
+    const archived = { ...SEED_EXERCISES[0], name: 'Old Move', archived: true }
+    expect(planExerciseImport('Old Move', [archived]).toAdd).toEqual(['Old Move'])
+  })
+
+  it('creates custom exercises with the chosen details', async () => {
+    const { added, plan } = await importExercises('Kelso Shrug\nBench Press, Barbell\nBarbell Bench Press', defaults)
+    expect(added.map((e) => e.name)).toEqual(['Kelso Shrug', 'Bench Press, Barbell'])
+    expect(plan.skipped).toHaveLength(1)
+    const stored = await db.exercises.get(added[0].id)
+    expect(stored).toMatchObject({ ...defaults, isCustom: true, archived: false, note: '' })
+    expect(await db.exercises.count()).toBe(SEED_EXERCISES.length + 2)
+    // importing the same list again adds nothing
+    expect((await importExercises('Kelso Shrug', defaults)).added).toEqual([])
+  })
+
+  it('needs a muscle group', async () => {
+    await expect(importExercises('Kelso Shrug', { ...defaults, muscleGroups: [] })).rejects.toThrow('muscle group')
+    expect(await db.exercises.count()).toBe(SEED_EXERCISES.length)
   })
 })

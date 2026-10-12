@@ -69,6 +69,7 @@ Bottom tab bar (always visible except during an active workout):
 - **List:** name, number of exercises, last performed. ⋯ menu: Start, Edit, Duplicate, Delete.
 - **Routine editor:** name, note, exercises (drag to reorder). Per exercise: planned sets (rows with target reps or target time, optional target weight), rest time.
 - **Exercise Library** (button in the Routines header): browse/search all exercises, edit/archive custom ones, open an exercise's progress.
+  - **Import a list**: paste names (one per line; list markers like "-" or "3." are stripped), pick muscle group(s), equipment and tracking type for all of them → creates custom exercises in one go. Names already in the library, repeated, or too long are listed and skipped.
 
 ### History
 - Toggle **Calendar / List**.

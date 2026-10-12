@@ -1,5 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router'
 import { BackButton } from '../components/BackButton.tsx'
+import { ButtonLink } from '../components/Button.tsx'
 import { ExerciseForm } from '../components/exercises/ExerciseForm.tsx'
 import { Screen } from '../components/Screen.tsx'
 
@@ -18,6 +19,9 @@ export function NewExerciseScreen() {
         initialName={params.get('name') ?? ''}
         onCreated={(e) => navigate(`/routines/exercises/${e.id}`, { replace: true })}
       />
+      <ButtonLink to="/routines/exercises/import" variant="ghost" block>
+        Have a list? Import several at once
+      </ButtonLink>
     </Screen>
   )
 }

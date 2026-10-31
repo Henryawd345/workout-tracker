@@ -46,7 +46,7 @@ test('a 1-round boxing session runs to the bell and shows a summary', async ({ p
 
 test('your own combos are saved per sport', async ({ page }) => {
   await page.goto('/#/fight/muay_thai')
-  await page.getByRole('link', { name: 'My combos' }).tap()
+  await page.getByRole('link', { name: 'Combos' }).tap()
   await page.getByRole('textbox', { name: 'New combo' }).fill('1 2 rear kick')
   await page.getByRole('button', { name: 'Add combo' }).tap()
   await expect(page.getByRole('list', { name: 'Your combos' })).toContainText('1 2 rear kick')
@@ -56,6 +56,24 @@ test('your own combos are saved per sport', async ({ page }) => {
     await page.emulateMedia({ colorScheme: scheme })
     await noSeriousProblems(page, `${scheme} combos`)
   }
+})
+
+test('Start is in reach without scrolling, with nothing under it to mis-tap', async ({ page }) => {
+  await page.goto('/#/fight')
+  await page.getByRole('link', { name: /Kickboxing/ }).tap()
+  await expect(page.getByRole('button', { name: 'Start' })).toBeVisible()
+  // On an iPhone 14 the setup screen is taller than the space for it — that's what made Start move.
+  const main = await page.locator('main').evaluate((m) => ({ scroll: m.scrollHeight, client: m.clientHeight, bottom: m.getBoundingClientRect().bottom }))
+  expect(main.scroll).toBeGreaterThan(main.client)
+  const start = await page.getByRole('button', { name: 'Start' }).boundingBox()
+  // Before any scrolling, Start already sits at the bottom of the visible area.
+  expect(main.bottom - (start!.y + start!.height)).toBeLessThan(24)
+  const combos = await page.getByRole('link', { name: /Combos/ }).boundingBox()
+  expect(combos!.y).toBeLessThan(start!.y)
+  // Scrolled to the very bottom, Start is still the last thing above the tab bar.
+  await page.locator('main').evaluate((m) => m.scrollTo(0, m.scrollHeight))
+  const after = await page.getByRole('button', { name: 'Start' }).boundingBox()
+  expect(after!.y).toBeCloseTo(start!.y, 0)
 })
 
 test('the session survives a reload', async ({ page }) => {

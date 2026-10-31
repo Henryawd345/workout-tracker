@@ -32,6 +32,15 @@ function entries(workouts: Workout[], sessions: FightSession[]): Entry[] {
   ]
 }
 
+/** "2 workouts", "1 fight session", "2 workouts, 1 fight session" */
+function describeEntries(list: Entry[]): string {
+  const fights = list.filter((e) => e.kind === 'fight').length
+  const workouts = list.length - fights
+  return [workouts > 0 && plural(workouts, 'workout'), fights > 0 && plural(fights, 'fight session')]
+    .filter(Boolean)
+    .join(', ')
+}
+
 /** Grouped by calendar month (local time), newest month and newest workout first. */
 function groupByMonth(workouts: Entry[]): { label: string; workouts: Entry[] }[] {
   const byMonth = new Map<string, Entry[]>()
@@ -117,6 +126,7 @@ export function HistoryScreen() {
           {view === 'calendar' ? (
             <HistoryCalendar
               workouts={workouts}
+              describe={describeEntries}
               renderDay={(dayWorkouts, dayLabel) =>
                 dayWorkouts.length === 0 ? (
                   <p className={styles.restDay}>{dayLabel}: rest day.</p>
@@ -129,7 +139,7 @@ export function HistoryScreen() {
             groupByMonth(workouts).map((group) => (
               <section key={group.label} aria-label={group.label} className={styles.month}>
                 <h2 className={styles.monthLabel}>
-                  {group.label} <span>· {plural(group.workouts.length, 'workout')}</span>
+                  {group.label} <span>· {describeEntries(group.workouts)}</span>
                 </h2>
                 <WorkoutRows workouts={group.workouts} />
               </section>

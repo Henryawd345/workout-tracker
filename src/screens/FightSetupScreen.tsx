@@ -71,7 +71,15 @@ function SetupForm({ initial }: { initial: FightPlan }) {
   }
 
   return (
-    <Screen title={SPORT_LABELS[plan.sport]} leading={back}>
+    <Screen
+      title={SPORT_LABELS[plan.sport]}
+      leading={back}
+      action={
+        <ButtonLink to={`/fight/${plan.sport}/combos`} variant="ghost">
+          Combos{comboCount ? ` (${comboCount})` : ''}
+        </ButtonLink>
+      }
+    >
       <Segmented
         label="Round length"
         value={String(plan.roundSec)}
@@ -113,18 +121,17 @@ function SetupForm({ initial }: { initial: FightPlan }) {
         Total {formatDuration(totalSec(plan))}, including {READY_SEC} seconds to get ready.
       </p>
 
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
-
-      <Button variant="primary" block disabled={starting} onClick={() => void start()}>
-        Start
-      </Button>
-      <ButtonLink to={`/fight/${plan.sport}/combos`} variant="ghost" block>
-        My combos{comboCount ? ` (${comboCount})` : ''}
-      </ButtonLink>
+      {/* Stays at the bottom of the screen while the page scrolls, with nothing below it to mis-tap. */}
+      <div className={styles.startBar}>
+        {error && (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        )}
+        <Button variant="primary" block disabled={starting} onClick={() => void start()}>
+          Start
+        </Button>
+      </div>
     </Screen>
   )
 }

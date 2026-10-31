@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   addCombo,
   finishFightSession,
@@ -14,6 +14,9 @@ import { renderApp } from '../test/renderApp.tsx'
 
 const spoken: string[] = []
 beforeEach(async () => {
+  // Mid-month, mid-week, midday: no day, week or month boundary near "now".
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 9, 14, 12, 0))
   spoken.length = 0
   vi.stubGlobal(
     'SpeechSynthesisUtterance',
@@ -31,6 +34,11 @@ beforeEach(async () => {
   await resetDb()
 })
 
+afterEach(() => {
+  vi.useRealTimers()
+  vi.unstubAllGlobals()
+})
+
 /** A finished boxing session (2 of 3 rounds) that started `daysAgo` days ago. */
 async function finishedSession(daysAgo = 0) {
   const start = Date.now() - daysAgo * 86_400_000 - 60_000
@@ -41,7 +49,7 @@ async function finishedSession(daysAgo = 0) {
 describe('my combos', () => {
   it('adds, refuses duplicates, plays and deletes with undo', async () => {
     renderApp('/fight/boxing')
-    await userEvent.click(await screen.findByRole('link', { name: 'My combos' }))
+    await userEvent.click(await screen.findByRole('link', { name: 'Combos' }))
     expect(await screen.findByText('No combos yet')).toBeInTheDocument()
 
     const field = screen.getByRole('textbox', { name: 'New combo' })
@@ -67,7 +75,7 @@ describe('my combos', () => {
   it('shows the count on the setup screen', async () => {
     await addCombo('muay_thai', '1 2 rear kick')
     renderApp('/fight/muay_thai')
-    expect(await screen.findByRole('link', { name: 'My combos (1)' })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Combos (1)' })).toBeInTheDocument()
   })
 })
 
@@ -81,6 +89,7 @@ describe('fight sessions in history', () => {
     const rows = await screen.findAllByRole('link', { name: /Boxing|Pull day/ })
     expect(rows.map((r) => r.textContent)).toEqual([expect.stringContaining('Boxing'), expect.stringContaining('Pull day')])
     expect(rows[0]).toHaveTextContent('2 of 3 × 3 min · Hard')
+    expect(screen.getByText(/· 1 workout, 1 fight session$/)).toBeInTheDocument()
 
     await userEvent.click(rows[0])
     expect(await screen.findByRole('heading', { name: 'Boxing' })).toBeInTheDocument()
@@ -99,7 +108,8 @@ describe('fight sessions in history', () => {
     await finishedSession(0)
     renderApp('/history?view=calendar')
     const days = await screen.findByRole('group', { name: /^Days in/ })
-    expect(within(days).getByRole('button', { name: /1 workout$/ })).toBeInTheDocument()
+    expect(within(days).getByRole('button', { name: /, 1 fight session$/ })).toBeInTheDocument()
+    expect(screen.getByText('1 fight session')).toBeInTheDocument()
   })
 
   it('counts them in “this week” on Today', async () => {

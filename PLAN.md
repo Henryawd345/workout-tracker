@@ -93,10 +93,10 @@ Bottom tab bar (always visible except during an active workout or fight session)
 
 ### Fight
 - **Sports:** Boxing · Muay Thai · Kickboxing · Wrestling (cards). A session in progress shows a *Resume* button on top.
-- **Setup** (per sport, pre-filled with your last choices): round length 1/2/3/5 min · rounds 1–12 (− / +) · rest 30 s/1/2 min · intensity Easy/Medium/Hard · total time · **Start**.
+- **Setup** (per sport, pre-filled with your last choices): round length 1/2/3/5 min · rounds 1–12 (− / +) · rest 30 s/1/2 min · intensity Easy/Medium/Hard · total time · **Start** (kept at the bottom of the screen while it scrolls, nothing below it). *Combos* in the header.
 - **Session** (full screen): phase (Get ready / Round 2 of 3 / Rest), big countdown and progress bar, **the current combo in big text**, Pause/Resume, End (saves full rounds, or discards if none), Minimise (the session and the coach keep running; a "session in progress" bar stays on every tab). After a reload iOS needs one tap to turn sound back on, so the screen offers it. The coach (phone text-to-speech) says "Round 2", the combos, "Rest" and "Time"; a bell rings at the start (once) and end (three times) of each round and two knocks warn at 10 s. The screen is kept awake where the phone allows it.
 - **Summary:** rounds done / planned, round length, time, note → *Done*.
-- **My combos** (link on the setup screen, per sport): type a combo ("1 2 slip 2 3", "shot, sprawl, re-shot") → *Add combo*; each can be heard (speaker) or deleted (with Undo). About 1 call in 3 is one of yours.
+- **My combos** (*Combos* in the setup screen's header, per sport): type a combo ("1 2 slip 2 3", "shot, sprawl, re-shot") → *Add combo*; each can be heard (speaker) or deleted (with Undo). About 1 call in 3 is one of yours.
 
 ### Settings
 - Units: **kg / lb** (display unit; stored values are never altered).

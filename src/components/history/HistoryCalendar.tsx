@@ -11,11 +11,20 @@ interface Props<T extends { startedAt: string }> {
   workouts: T[]
   /** How to show the chosen day's workouts. */
   renderDay: (workouts: T[], dayLabel: string) => ReactNode
+  /** "2 workouts", "1 workout, 1 fight session" — what a group of items is called. */
+  describe?: (items: T[]) => string
   today?: Date
 }
 
+const countWorkouts = (items: unknown[]) => `${items.length} workout${items.length === 1 ? '' : 's'}`
+
 /** Month grid with a dot on every day you trained. Tap a day to see its workouts. */
-export function HistoryCalendar<T extends { startedAt: string }>({ workouts, renderDay, today = new Date() }: Props<T>) {
+export function HistoryCalendar<T extends { startedAt: string }>({
+  workouts,
+  renderDay,
+  describe = countWorkouts,
+  today = new Date(),
+}: Props<T>) {
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const [selected, setSelected] = useState<string | null>(null)
 
@@ -32,10 +41,9 @@ export function HistoryCalendar<T extends { startedAt: string }>({ workouts, ren
   const leadingBlanks = (new Date(year, m, 1).getDay() + 6) % 7 // Monday first
   const todayKey = toDateInputValue(today.toISOString())
   const keyFor = (day: number) => `${year}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-  const monthCount = [...byDay.keys()].filter((k) => k.startsWith(`${year}-${String(m + 1).padStart(2, '0')}`)).reduce(
-    (n, k) => n + byDay.get(k)!.length,
-    0,
-  )
+  const monthItems = [...byDay.keys()]
+    .filter((k) => k.startsWith(`${year}-${String(m + 1).padStart(2, '0')}`))
+    .flatMap((k) => byDay.get(k)!)
   const monthName = month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
 
   function go(delta: number) {
@@ -52,7 +60,7 @@ export function HistoryCalendar<T extends { startedAt: string }>({ workouts, ren
         <h2 className={styles.title} aria-live="polite">
           {monthName}
           <span className={styles.count}>
-            {monthCount === 0 ? 'No workouts' : `${monthCount} workout${monthCount === 1 ? '' : 's'}`}
+            {monthItems.length === 0 ? 'No workouts' : describe(monthItems)}
           </span>
         </h2>
         <IconButton label="Next month" onClick={() => go(1)}>
@@ -72,7 +80,8 @@ export function HistoryCalendar<T extends { startedAt: string }>({ workouts, ren
         {Array.from({ length: daysInMonth }, (_, i) => {
           const day = i + 1
           const key = keyFor(day)
-          const count = byDay.get(key)?.length ?? 0
+          const items = byDay.get(key) ?? []
+          const count = items.length
           const label = new Date(year, m, day).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })
           return (
             <button
@@ -84,7 +93,7 @@ export function HistoryCalendar<T extends { startedAt: string }>({ workouts, ren
                 key === todayKey ? styles.today : '',
                 key === selected ? styles.selected : '',
               ].join(' ')}
-              aria-label={count > 0 ? `${label}, ${count} workout${count === 1 ? '' : 's'}` : label}
+              aria-label={count > 0 ? `${label}, ${describe(items)}` : label}
               aria-pressed={key === selected}
               onClick={() => setSelected(key === selected ? null : key)}
             >

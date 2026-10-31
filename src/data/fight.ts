@@ -215,7 +215,11 @@ export async function addCombo(sport: Sport, text: string): Promise<CustomCombo>
       .filter((c) => c.text.toLowerCase() === lower)
       .first()
     if (clash) throw new Error(`“${clash.text}” is already in your combos`)
-    const now = nowIso()
+    // The list is in the order you added them, so never share (or go before) the newest one's time,
+    // even when two are added within the same millisecond.
+    const newest = (await db.combos.where('sport').equals(sport).sortBy('createdAt')).at(-1)
+    const t = Math.max(Date.now(), newest ? Date.parse(newest.createdAt) + 1 : 0)
+    const now = new Date(t).toISOString()
     const combo: CustomCombo = { id: newId(), sport, text: clean, createdAt: now, updatedAt: now }
     await db.combos.add(combo)
     return combo

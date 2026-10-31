@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetDb } from '../test/factories.ts'
 import { db } from './db.ts'
 import {
@@ -139,6 +139,14 @@ describe('your own combos', () => {
     await addCombo('boxing', '1 2')
     await restoreCombo(a)
     expect(await listCombos('boxing')).toHaveLength(1)
+  })
+
+  it('keeps the order you added them, even within the same millisecond', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(T)
+    for (const text of ['c', 'a', 'b', 'd']) await addCombo('boxing', text)
+    vi.useRealTimers()
+    expect((await listCombos('boxing')).map((c) => c.text)).toEqual(['c', 'a', 'b', 'd'])
   })
 
   it('refuses empty, too long and duplicate combos', async () => {

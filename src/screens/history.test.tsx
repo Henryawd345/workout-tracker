@@ -28,7 +28,7 @@ describe('history', () => {
       expect.stringContaining('Legs'),
     ])
     expect(within(sept).getByRole('heading')).toHaveTextContent('2 workouts')
-    expect(within(sept).getByText(/1:00:00 · 1 exercise · 2 sets/)).toBeInTheDocument()
+    expect(within(sept).getByRole('link', { name: /Legs/ })).toHaveTextContent(/1:00:00 · 1 exercise · 2 sets/)
     expect(screen.getByRole('region', { name: /August 2026/ })).toHaveTextContent('Pull')
   })
 

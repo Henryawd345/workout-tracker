@@ -60,7 +60,7 @@
 
 .sets th {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--font-sm);
   font-weight: 600;
   text-transform: uppercase;
 }

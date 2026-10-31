@@ -59,6 +59,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Wraps only between parts, never inside one. */
+.metaPart {
+  white-space: nowrap;
+}
+
 .chevron {
   flex-shrink: 0;
   width: 20px;

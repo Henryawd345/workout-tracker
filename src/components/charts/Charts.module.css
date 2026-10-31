@@ -26,7 +26,7 @@
 
 .tick {
   fill: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--font-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -70,7 +70,7 @@
 
 .tooltip span {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--font-sm);
 }
 
 /* Workouts-per-week columns */
@@ -115,7 +115,7 @@
 
 .barValue {
   margin-bottom: 2px;
-  font-size: 12px;
+  font-size: var(--font-sm);
   font-weight: 700;
 }
 
@@ -124,7 +124,7 @@
   justify-content: space-between;
   padding-top: var(--space-1);
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--font-sm);
 }
 
 .barCaption {

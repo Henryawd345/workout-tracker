@@ -13,7 +13,8 @@ interface LineChartProps {
   height?: number
 }
 
-const PAD = { top: 16, right: 16, bottom: 28, left: 40 }
+// Room for 16px axis labels (e.g. "102.5" on the left, dates underneath).
+const PAD = { top: 16, right: 16, bottom: 32, left: 52 }
 
 function formatShortDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })

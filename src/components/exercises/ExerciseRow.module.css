@@ -40,7 +40,7 @@
   padding: 0 6px;
   border-radius: 6px;
   background: var(--surface-2);
-  font-size: 12px;
+  font-size: var(--font-sm);
   font-weight: 600;
 }
 

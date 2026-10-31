@@ -1,8 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { Fragment } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Segmented } from '../components/Fields.tsx'
 import { formatDate, formatTime, plural } from '../components/format.ts'
-import { planSummary, SPORT_LABELS } from '../components/fight/labels.ts'
+import { INTENSITY_LABELS, secLabel, SPORT_LABELS } from '../components/fight/labels.ts'
 import { HistoryCalendar } from '../components/history/HistoryCalendar.tsx'
 import { ChevronRightIcon } from '../components/icons.tsx'
 import { EmptyState, Screen } from '../components/Screen.tsx'
@@ -64,15 +65,39 @@ function WorkoutRows({ workouts, label }: { workouts: Entry[]; label?: string })
   )
 }
 
+/**
+ * "Sat 31 Oct, 10:00 · 52:10 · 4 exercises": each part keeps its "·" on the same line, so a
+ * wrapped line never starts with a separator.
+ */
+function Meta({ parts }: { parts: string[] }) {
+  return (
+    <span className={styles.meta}>
+      {parts.map((part, i) => (
+        <Fragment key={i}>
+          {i > 0 && ' '}
+          <span className={styles.metaPart}>
+            {part}
+            {i < parts.length - 1 ? ' ·' : ''}
+          </span>
+        </Fragment>
+      ))}
+    </span>
+  )
+}
+
 function WorkoutRow({ w }: { w: Workout }) {
   return (
     <Link to={`/history/${w.id}`} className={styles.row}>
       <span className={styles.text}>
         <span className={styles.name}>{w.name}</span>
-        <span className={styles.meta}>
-          {formatDate(w.startedAt)}, {formatTime(w.startedAt)} · {formatDuration(workoutDurationSec(w))} ·{' '}
-          {plural(w.exerciseIds.length, 'exercise')} · {plural(workoutCompletedSetCount(w), 'set')}
-        </span>
+        <Meta
+          parts={[
+            `${formatDate(w.startedAt)}, ${formatTime(w.startedAt)}`,
+            formatDuration(workoutDurationSec(w)),
+            plural(w.exerciseIds.length, 'exercise'),
+            plural(workoutCompletedSetCount(w), 'set'),
+          ]}
+        />
       </span>
       <ChevronRightIcon className={styles.chevron} aria-hidden="true" />
     </Link>
@@ -84,11 +109,14 @@ function FightRow({ s }: { s: FightSession }) {
     <Link to={`/history/fight/${s.id}`} className={styles.row}>
       <span className={styles.text}>
         <span className={styles.name}>{SPORT_LABELS[s.sport]}</span>
-        <span className={styles.meta}>
-          {formatDate(s.startedAt)}, {formatTime(s.startedAt)} · {formatDuration(fightSessionDurationSec(s))} ·{' '}
-          {s.completedRounds < s.rounds ? `${s.completedRounds} of ` : ''}
-          {planSummary({ ...s, rounds: s.rounds })}
-        </span>
+        <Meta
+          parts={[
+            `${formatDate(s.startedAt)}, ${formatTime(s.startedAt)}`,
+            formatDuration(fightSessionDurationSec(s)),
+            `${s.completedRounds < s.rounds ? `${s.completedRounds} of ` : ''}${s.rounds} × ${secLabel(s.roundSec)}`,
+            INTENSITY_LABELS[s.intensity],
+          ]}
+        />
       </span>
       <ChevronRightIcon className={styles.chevron} aria-hidden="true" />
     </Link>

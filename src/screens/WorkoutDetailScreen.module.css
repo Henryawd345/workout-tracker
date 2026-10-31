@@ -1,5 +1,5 @@
 .when {
-  margin-top: calc(-1 * var(--space-3));
+  /* No negative margin: a long name wraps to two lines and would cover it. */
   color: var(--text-muted);
 }
 

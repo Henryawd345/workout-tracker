@@ -111,7 +111,7 @@
 .recordLabel,
 .recordDate {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 
 .recordValue {

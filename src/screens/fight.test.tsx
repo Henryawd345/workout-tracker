@@ -124,7 +124,7 @@ describe('live session', () => {
     await waitFor(() => expect(spoken.length).toBe(2))
     const combo = spoken[1]
     expect(combo).toMatch(/^[1-6]( (\d|slip|roll|duck|pull))+$/) // medium boxing: 2–4 moves
-    expect(screen.getByLabelText('Combo')).toHaveTextContent(combo)
+    await waitFor(() => expect(screen.getByLabelText('Combo')).toHaveTextContent(combo))
 
     at(READY_SEC + 51)
     await waitFor(() => expect(alerts.warningKnock).toHaveBeenCalledTimes(1))
@@ -156,11 +156,11 @@ describe('live session', () => {
     at(READY_SEC + 20)
     await phase('Round 1 of 2')
     await userEvent.click(screen.getByRole('button', { name: 'Pause' }))
-    expect(screen.getByLabelText('Combo')).toHaveTextContent('Paused')
+    await waitFor(() => expect(screen.getByLabelText('Combo')).toHaveTextContent('Paused'))
     await waitFor(async () => expect((await getActiveFightSession())?.clock.runningSince).toBeNull())
 
     at(READY_SEC + 500)
-    expect(screen.getByRole('timer')).toHaveTextContent('0:40')
+    await waitFor(() => expect(screen.getByRole('timer')).toHaveTextContent('0:40'))
     await userEvent.click(screen.getByRole('button', { name: 'Resume' }))
     at(READY_SEC + 510)
     await waitFor(() => expect(screen.getByRole('timer')).toHaveTextContent('0:30'))
@@ -171,7 +171,7 @@ describe('live session', () => {
     at(READY_SEC + 60 + 10) // 10 s into the rest
     renderApp('/fight/session')
     expect(await phase(/Rest/)).toBeInTheDocument()
-    expect(screen.getByRole('timer')).toHaveTextContent('0:20')
+    await waitFor(() => expect(screen.getByRole('timer')).toHaveTextContent('0:20'))
     expect(alerts.roundBell).not.toHaveBeenCalled()
     expect(spoken).toEqual([])
   })

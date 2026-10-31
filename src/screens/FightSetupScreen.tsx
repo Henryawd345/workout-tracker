@@ -87,8 +87,11 @@ function SetupForm({ initial }: { initial: FightPlan }) {
         onChange={(v) => set({ roundSec: Number(v) })}
       />
 
-      <fieldset className={styles.stepper}>
-        <legend className={styles.label}>Rounds</legend>
+      {/* A labelled group, not a fieldset: see Segmented (Fields.tsx). */}
+      <div className={styles.stepper} role="group" aria-labelledby="rounds-label">
+        <span id="rounds-label" className={styles.label}>
+          Rounds
+        </span>
         <div className={styles.stepperRow}>
           <Button aria-label="Fewer rounds" disabled={plan.rounds <= 1} onClick={() => set({ rounds: plan.rounds - 1 })}>
             −
@@ -100,7 +103,7 @@ function SetupForm({ initial }: { initial: FightPlan }) {
             +
           </Button>
         </div>
-      </fieldset>
+      </div>
 
       <Segmented
         label="Rest between rounds"

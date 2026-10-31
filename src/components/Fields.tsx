@@ -154,12 +154,20 @@ interface SegmentedProps<T extends string> {
   hint?: string
 }
 
-/** A row of mutually exclusive options (radio buttons styled as one control). */
+/**
+ * A row of mutually exclusive options (radio buttons styled as one control).
+ *
+ * A labelled group rather than <fieldset>/<legend>: in the iPhone Home Screen app a fieldset
+ * was first drawn taller and shrank on the first tap, so the page jumped and that tap was lost.
+ */
 export function Segmented<T extends string>({ label, value, options, onChange, disabled, hint }: SegmentedProps<T>) {
   const name = useId()
+  const labelId = `${name}-label`
   return (
-    <fieldset className={styles.fieldset} disabled={disabled}>
-      <legend className={styles.label}>{label}</legend>
+    <div className={styles.fieldset} role="group" aria-labelledby={labelId} aria-disabled={disabled || undefined}>
+      <span id={labelId} className={styles.label}>
+        {label}
+      </span>
       <div className={styles.segmented}>
         {options.map((o) => (
           <label key={o.value} className={styles.segment}>
@@ -168,6 +176,7 @@ export function Segmented<T extends string>({ label, value, options, onChange, d
               name={name}
               value={o.value}
               checked={value === o.value}
+              disabled={disabled}
               onChange={() => onChange(o.value)}
             />
             <span>{o.label}</span>
@@ -175,6 +184,6 @@ export function Segmented<T extends string>({ label, value, options, onChange, d
         ))}
       </div>
       {hint && <p className={styles.hint}>{hint}</p>}
-    </fieldset>
+    </div>
   )
 }

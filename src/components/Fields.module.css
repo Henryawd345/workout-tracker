@@ -105,7 +105,7 @@
   outline: 3px solid var(--accent);
 }
 
-.fieldset:disabled .segment span {
+.fieldset[aria-disabled='true'] .segment span {
   opacity: 0.5;
 }
 

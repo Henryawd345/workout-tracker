@@ -17,7 +17,7 @@ export function AppShell() {
   const onWorkout = workoutMatch !== null || fightMatch !== null
   return (
     <FightSessionHost>
-      <div className={styles.shell}>
+      <div className={onWorkout ? styles.shell : `${styles.shell} ${styles.withTabs}`}>
         <main className={styles.main}>
           {!onWorkout && <UpdateBanner />}
           <Outlet />

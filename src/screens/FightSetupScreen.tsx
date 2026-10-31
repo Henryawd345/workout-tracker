@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router'
 import { BackButton } from '../components/BackButton.tsx'
-import { Button } from '../components/Button.tsx'
+import { Button, ButtonLink } from '../components/Button.tsx'
 import { unlockFightSound } from '../components/fight/coach.ts'
 import { INTENSITY_LABELS, isSport, secLabel, SPORT_LABELS } from '../components/fight/labels.ts'
 import { Segmented } from '../components/Fields.tsx'
@@ -12,6 +12,7 @@ import {
   formatDuration,
   INTENSITIES,
   lastFightPlan,
+  listCombos,
   MAX_ROUNDS,
   READY_SEC,
   REST_SEC_OPTIONS,
@@ -50,6 +51,7 @@ function SetupForm({ initial }: { initial: FightPlan }) {
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const set = (changes: Partial<FightPlan>) => setPlan((p) => ({ ...p, ...changes }))
+  const comboCount = useLiveQuery(async () => (await listCombos(initial.sport)).length, [initial.sport], 0)
 
   async function start() {
     if (starting) return
@@ -58,7 +60,7 @@ function SetupForm({ initial }: { initial: FightPlan }) {
     setStarting(true)
     try {
       await startFightSession(plan)
-      navigate('/fight/session')
+      navigate('/fight/session', { state: { starting: true } })
     } catch (err) {
       if (err instanceof ActiveFightSessionExistsError) navigate('/fight/session')
       else {
@@ -120,6 +122,9 @@ function SetupForm({ initial }: { initial: FightPlan }) {
       <Button variant="primary" block disabled={starting} onClick={() => void start()}>
         Start
       </Button>
+      <ButtonLink to={`/fight/${plan.sport}/combos`} variant="ghost" block>
+        My combos{comboCount ? ` (${comboCount})` : ''}
+      </ButtonLink>
     </Screen>
   )
 }

@@ -56,8 +56,13 @@ export function useFightCoach({ session, state, now, custom, voiceURI, rate }: C
     lastTick.current = now
 
     if (phaseKey.current === null || (jumped && key !== phaseKey.current)) {
-      // First tick on this screen: land quietly in whatever phase it is.
+      // First tick, or back after the phone was locked: land quietly in whatever phase it is.
+      if (phaseKey.current !== null) {
+        callId.current++
+        setCurrent(null)
+      }
       phaseKey.current = key
+      wasPaused.current = paused
       nextAt.current = now + FIRST_CALL_DELAY_SEC * 1000
       if (phase === 'round' && remainingSec <= 10) warnedRound.current = round
       return

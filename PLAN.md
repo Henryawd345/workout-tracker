@@ -80,6 +80,8 @@ Bottom tab bar (always visible except during an active workout or fight session)
   - *Edit*: the same set-row UI as the active workout (no timer). Can change values, add/remove sets and exercises, change date/duration and notes.
   - *Delete* (with confirmation).
 
+- Fight sessions appear in the list and calendar next to workouts ("Boxing · 3 × 3 min · Hard"). **Fight session detail:** date and time, rounds done / planned, round length, time, intensity and rest, note, *Delete session* (with confirmation). Today's "This week" counts them too.
+
 ### Progress
 - Exercise selector (search; defaults to most-logged exercise).
 - **Chart** with metric toggle and time range (1M · 3M · 1Y · All):
@@ -94,6 +96,7 @@ Bottom tab bar (always visible except during an active workout or fight session)
 - **Setup** (per sport, pre-filled with your last choices): round length 1/2/3/5 min · rounds 1–12 (− / +) · rest 30 s/1/2 min · intensity Easy/Medium/Hard · total time · **Start**.
 - **Session** (full screen): phase (Get ready / Round 2 of 3 / Rest), big countdown and progress bar, **the current combo in big text**, Pause/Resume, End (saves full rounds, or discards if none), Minimise (the session and the coach keep running; a "session in progress" bar stays on every tab). After a reload iOS needs one tap to turn sound back on, so the screen offers it. The coach (phone text-to-speech) says "Round 2", the combos, "Rest" and "Time"; a bell rings at the start (once) and end (three times) of each round and two knocks warn at 10 s. The screen is kept awake where the phone allows it.
 - **Summary:** rounds done / planned, round length, time, note → *Done*.
+- **My combos** (link on the setup screen, per sport): type a combo ("1 2 slip 2 3", "shot, sprawl, re-shot") → *Add combo*; each can be heard (speaker) or deleted (with Undo). About 1 call in 3 is one of yours.
 
 ### Settings
 - Units: **kg / lb** (display unit; stored values are never altered).
@@ -267,7 +270,7 @@ The order builds the **thinnest complete flow first** (phases 0–5), then deepe
 
 - [x] **11. Fight data** — sessions, combos, combo generator, fight clock maths; backup version 2 (still reads version 1); delete-all includes the new tables. No UI yet.
 - [x] **12. Fight tab + live session** — Fight tab (5 tabs), sport cards, setup (round length 1/2/3/5 min, rounds 1–12, rest 30 s/1/2 min, intensity), full-screen session with big countdown and the combo in big text, voice coach (phone text-to-speech), bell and 10 s warning, keep screen awake, resume after reload, in-progress bar, summary; coach voice and speed in Settings.
-- [ ] **13. Own combos + History** — combo list per sport (add, test-speak, delete with undo); fight sessions in History list, calendar and a detail screen (note, delete); counted in Today's "This week". Not in Progress charts yet.
+- [x] **13. Own combos + History** — combo list per sport (add, test-speak, delete with undo); fight sessions in History list, calendar and a detail screen (note, delete); counted in Today's "This week". Not in Progress charts yet.
 
 ### How agents are used here
 - **Main agent:** plans and builds each phase in order. Phases 0–4 all touch the shared data types, so they run one at a time.

@@ -9,6 +9,7 @@ import { EmptyState, Screen } from '../components/Screen.tsx'
 import {
   ActiveWorkoutExistsError,
   countCompletedSince,
+  countFightSessionsSince,
   formatDuration,
   getActiveWorkout,
   getRoutinesLastPerformed,
@@ -27,7 +28,12 @@ export function TodayScreen() {
   const active = useLiveQuery(async () => (await getActiveWorkout()) ?? null, [])
   const routines = useLiveQuery(() => listRoutines(), [])
   const lastDone = useLiveQuery(() => getRoutinesLastPerformed(), [], {} as Record<string, string>)
-  const thisWeek = useLiveQuery(() => countCompletedSince(startOfWeekIso()), [], 0)
+  // Lifting workouts and fight sessions both count.
+  const thisWeek = useLiveQuery(
+    async () => (await countCompletedSince(startOfWeekIso())) + (await countFightSessionsSince(startOfWeekIso())),
+    [],
+    0,
+  )
 
   // Most recently trained first; never-used routines after, newest edits first.
   const sorted = [...(routines ?? [])].sort((a, b) =>

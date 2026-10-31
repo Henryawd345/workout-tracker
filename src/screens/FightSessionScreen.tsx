@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import { Button, ButtonLink } from '../components/Button.tsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.tsx'
 import { unlockFightSound } from '../components/fight/coach.ts'
@@ -18,6 +18,8 @@ import styles from './FightSessionScreen.module.css'
 export function FightSessionScreen() {
   const navigate = useNavigate()
   const fight = useFightSession()
+  // Coming from Start: the new session may take a moment to arrive; don't flash "No session".
+  const starting = (useLocation().state as { starting?: boolean } | null)?.starting === true
   // The session this screen showed, so that when it ends we know which summary to open.
   const [shownId, setShownId] = useState<string | null>(null)
   const activeId = fight.status === 'active' ? fight.session.id : null
@@ -32,7 +34,7 @@ export function FightSessionScreen() {
   }, [fight.status, shownId, navigate])
 
   // Ending: show nothing for the moment before the summary opens.
-  if (fight.status === 'loading' || (fight.status === 'none' && shownId)) return null
+  if (fight.status === 'loading' || (fight.status === 'none' && (shownId || starting))) return null
   if (fight.status === 'none') {
     return (
       <Screen title="Fight">

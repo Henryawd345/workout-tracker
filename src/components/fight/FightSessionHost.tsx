@@ -76,7 +76,10 @@ function FightRunner({ stored, onChange }: { stored: FightSession; onChange: (li
     if (state.phase !== 'done' || finished.current) return
     finished.current = true
     // The last bell: save to history. The "Time" call keeps playing; nothing stops it.
-    void finishFightSession(stored.id).catch(() => undefined)
+    finishFightSession(stored.id).catch(async () => {
+      // Already saved (End, or another tab) is fine; anything else is tried again next tick.
+      if ((await getActiveFightSession())?.id === stored.id) finished.current = false
+    })
   }, [state.phase, stored.id])
 
   function togglePause() {
@@ -91,10 +94,16 @@ function FightRunner({ stored, onChange }: { stored: FightSession; onChange: (li
   }
 
   async function end() {
+    if (finished.current) return // the last bell already saved it
     finished.current = true
     stopSpeaking()
-    if (clockState(session, clock, Date.now()).completedRounds > 0) await finishFightSession(stored.id)
-    else await discardFightSession(stored.id)
+    try {
+      if (clockState(session, clock, Date.now()).completedRounds > 0) await finishFightSession(stored.id)
+      else await discardFightSession(stored.id)
+    } catch {
+      // Still in progress here? Then let End or the last bell try again.
+      if ((await getActiveFightSession())?.id === stored.id) finished.current = false
+    }
   }
 
   const latest = useRef({ togglePause, end })

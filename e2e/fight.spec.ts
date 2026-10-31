@@ -35,6 +35,27 @@ test('a 1-round boxing session runs to the bell and shows a summary', async ({ p
   await page.clock.runFor(60_000)
   await expect(page.getByRole('heading', { name: 'Session complete' })).toBeVisible()
   await expect(page.getByText('1/1')).toBeVisible()
+  await page.getByRole('button', { name: 'Done' }).tap()
+
+  // It's in History, next to lifting workouts, and opens its own detail.
+  await page.getByRole('link', { name: 'History' }).tap()
+  await page.getByRole('link', { name: /Boxing/ }).tap()
+  await expect(page.getByRole('heading', { name: 'Boxing' })).toBeVisible()
+  await noSeriousProblems(page, 'fight detail')
+})
+
+test('your own combos are saved per sport', async ({ page }) => {
+  await page.goto('/#/fight/muay_thai')
+  await page.getByRole('link', { name: 'My combos' }).tap()
+  await page.getByRole('textbox', { name: 'New combo' }).fill('1 2 rear kick')
+  await page.getByRole('button', { name: 'Add combo' }).tap()
+  await expect(page.getByRole('list', { name: 'Your combos' })).toContainText('1 2 rear kick')
+  await page.reload()
+  await expect(page.getByRole('list', { name: 'Your combos' })).toContainText('1 2 rear kick')
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme })
+    await noSeriousProblems(page, `${scheme} combos`)
+  }
 })
 
 test('the session survives a reload', async ({ page }) => {

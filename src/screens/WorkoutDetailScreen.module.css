@@ -90,3 +90,11 @@
   color: var(--text-muted);
   text-align: right;
 }
+
+.error {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+  font-weight: 600;
+}

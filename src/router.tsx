@@ -1,6 +1,8 @@
 import { createHashRouter, Navigate, type RouteObject } from 'react-router'
 import { AppShell } from './components/AppShell.tsx'
 import { ActiveWorkoutScreen } from './screens/ActiveWorkoutScreen.tsx'
+import { CombosScreen } from './screens/CombosScreen.tsx'
+import { FightDetailScreen } from './screens/FightDetailScreen.tsx'
 import { FightScreen } from './screens/FightScreen.tsx'
 import { FightSessionScreen } from './screens/FightSessionScreen.tsx'
 import { FightSetupScreen } from './screens/FightSetupScreen.tsx'
@@ -38,7 +40,9 @@ export const routes: RouteObject[] = [
       { path: 'fight/session', element: <FightSessionScreen /> },
       { path: 'fight/summary/:id', element: <FightSummaryScreen /> },
       { path: 'fight/:sport', element: <FightSetupScreen /> },
+      { path: 'fight/:sport/combos', element: <CombosScreen /> },
       { path: 'history', element: <HistoryScreen /> },
+      { path: 'history/fight/:id', element: <FightDetailScreen /> },
       { path: 'history/:id', element: <WorkoutDetailScreen /> },
       { path: 'history/:id/edit', element: <WorkoutEditScreen /> },
       { path: 'progress', element: <ProgressScreen /> },

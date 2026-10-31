@@ -226,7 +226,15 @@ export async function removeCombo(id: ID): Promise<void> {
   await db.combos.delete(id)
 }
 
-/** Puts back a removed combo (Undo). */
+/** Puts back a removed combo (Undo) — unless the same text was added again meanwhile. */
 export async function restoreCombo(combo: CustomCombo): Promise<void> {
-  await db.combos.put(combo)
+  await db.transaction('rw', db.combos, async () => {
+    const lower = combo.text.toLowerCase()
+    const clash = await db.combos
+      .where('sport')
+      .equals(combo.sport)
+      .filter((c) => c.id !== combo.id && c.text.toLowerCase() === lower)
+      .first()
+    if (!clash) await db.combos.put(combo)
+  })
 }

@@ -4,6 +4,11 @@
   height: 100%;
 }
 
+/* Toasts sit above the tab bar, not on top of it. */
+.withTabs {
+  --toast-offset: calc(var(--tabbar-height) + var(--space-3));
+}
+
 .main {
   flex: 1;
   overflow-y: auto;

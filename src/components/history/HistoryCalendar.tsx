@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from 'react'
-import type { Workout } from '../../data/index.ts'
 import { toDateInputValue } from '../format.ts'
 import { IconButton } from '../IconButton.tsx'
 import { BackIcon, ChevronRightIcon } from '../icons.tsx'
@@ -7,19 +6,20 @@ import styles from './HistoryCalendar.module.css'
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-interface Props {
-  workouts: Workout[]
+interface Props<T extends { startedAt: string }> {
+  /** Workouts and fight sessions — anything with a start time. */
+  workouts: T[]
   /** How to show the chosen day's workouts. */
-  renderDay: (workouts: Workout[], dayLabel: string) => ReactNode
+  renderDay: (workouts: T[], dayLabel: string) => ReactNode
   today?: Date
 }
 
 /** Month grid with a dot on every day you trained. Tap a day to see its workouts. */
-export function HistoryCalendar({ workouts, renderDay, today = new Date() }: Props) {
+export function HistoryCalendar<T extends { startedAt: string }>({ workouts, renderDay, today = new Date() }: Props<T>) {
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const [selected, setSelected] = useState<string | null>(null)
 
-  const byDay = new Map<string, Workout[]>()
+  const byDay = new Map<string, T[]>()
   // Within a day, earliest first (morning session, then evening).
   for (const w of [...workouts].sort((a, b) => a.startedAt.localeCompare(b.startedAt))) {
     const key = toDateInputValue(w.startedAt)

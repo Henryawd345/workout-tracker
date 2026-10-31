@@ -133,6 +133,14 @@ describe('your own combos', () => {
     expect(await listCombos('boxing')).toHaveLength(2)
   })
 
+  it('undo does not bring back a combo you have added again', async () => {
+    const a = await addCombo('boxing', '1 2')
+    await removeCombo(a.id)
+    await addCombo('boxing', '1 2')
+    await restoreCombo(a)
+    expect(await listCombos('boxing')).toHaveLength(1)
+  })
+
   it('refuses empty, too long and duplicate combos', async () => {
     await addCombo('boxing', '1 2')
     await expect(addCombo('boxing', '   ')).rejects.toThrow('Type a combo')

@@ -1,0 +1,38 @@
+.intro {
+  color: var(--text-muted);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 60px;
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-4);
+}
+
+.row + .row {
+  border-top: 1px solid var(--border);
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}

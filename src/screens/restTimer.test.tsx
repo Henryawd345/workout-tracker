@@ -57,7 +57,7 @@ describe('rest timer', () => {
   })
 
   it('does not start when auto-start is off, or for "No rest"', async () => {
-    await db.settings.put({ id: 'settings', displayUnit: 'kg', defaultRestSec: 90, autoStartRest: false })
+    await db.settings.put({ id: 'settings', displayUnit: 'kg', defaultRestSec: 90, autoStartRest: false, coachVoice: null, coachRate: 1 })
     await workoutWithOneSet()
     renderApp('/workout')
     await userEvent.click(await screen.findByRole('button', { name: 'Complete set 1' }))

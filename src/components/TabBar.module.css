@@ -1,6 +1,6 @@
 .bar {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   flex-shrink: 0;
   min-height: var(--tabbar-height);
   padding-bottom: var(--safe-bottom);

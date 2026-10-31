@@ -1,6 +1,10 @@
 import { createHashRouter, Navigate, type RouteObject } from 'react-router'
 import { AppShell } from './components/AppShell.tsx'
 import { ActiveWorkoutScreen } from './screens/ActiveWorkoutScreen.tsx'
+import { FightScreen } from './screens/FightScreen.tsx'
+import { FightSessionScreen } from './screens/FightSessionScreen.tsx'
+import { FightSetupScreen } from './screens/FightSetupScreen.tsx'
+import { FightSummaryScreen } from './screens/FightSummaryScreen.tsx'
 import { ExerciseDetailScreen } from './screens/ExerciseDetailScreen.tsx'
 import { ExerciseImportScreen } from './screens/ExerciseImportScreen.tsx'
 import { ExerciseLibraryScreen } from './screens/ExerciseLibraryScreen.tsx'
@@ -30,6 +34,10 @@ export const routes: RouteObject[] = [
       { path: 'routines/exercises/import', element: <ExerciseImportScreen /> },
       { path: 'routines/exercises/:id', element: <ExerciseDetailScreen /> },
       { path: 'routines/:id', element: <RoutineEditorScreen /> },
+      { path: 'fight', element: <FightScreen /> },
+      { path: 'fight/session', element: <FightSessionScreen /> },
+      { path: 'fight/summary/:id', element: <FightSummaryScreen /> },
+      { path: 'fight/:sport', element: <FightSetupScreen /> },
       { path: 'history', element: <HistoryScreen /> },
       { path: 'history/:id', element: <WorkoutDetailScreen /> },
       { path: 'history/:id/edit', element: <WorkoutEditScreen /> },

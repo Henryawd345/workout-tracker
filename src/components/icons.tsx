@@ -157,3 +157,13 @@ export function BackIcon(props: IconProps) {
     </Svg>
   )
 }
+
+export function GloveIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M7 12V8a5 5 0 0 1 5-5h1a5 5 0 0 1 5 5v4.5a4.5 4.5 0 0 1-4.5 4.5H9a2 2 0 0 1-2-2" />
+      <path d="M7 12H6a2 2 0 0 0 0 4h1" />
+      <path d="M8.5 17v4h8v-4" />
+    </Svg>
+  )
+}

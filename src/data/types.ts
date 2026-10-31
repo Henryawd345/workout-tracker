@@ -124,12 +124,20 @@ export interface Settings {
   displayUnit: WeightUnit
   defaultRestSec: number
   autoStartRest: boolean
+  /** Fight coach voice (a speechSynthesis voiceURI); null = the phone's default. */
+  coachVoice: string | null
+  /** Fight coach speaking speed: 1 = normal. */
+  coachRate: number
 }
+
+export const COACH_RATES = [0.85, 1, 1.2] as const
 
 export const DEFAULT_SETTINGS: Settings = {
   displayUnit: 'kg',
   defaultRestSec: 90,
   autoStartRest: true,
+  coachVoice: null,
+  coachRate: 1,
 }
 
 // —— Fight trainer ——

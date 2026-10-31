@@ -1,0 +1,44 @@
+.stepper {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.label {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  font-weight: 600;
+}
+
+.stepperRow {
+  display: grid;
+  grid-template-columns: 64px 1fr 64px;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.stepperRow button {
+  font-size: var(--font-xl);
+  line-height: 1;
+}
+
+.count {
+  font-size: var(--font-xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.total {
+  color: var(--text-muted);
+}
+
+.error {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+  font-weight: 600;
+}

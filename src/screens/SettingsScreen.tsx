@@ -3,6 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { ActionSheet } from '../components/ActionSheet.tsx'
 import { BackButton } from '../components/BackButton.tsx'
 import { Button } from '../components/Button.tsx'
+import { englishVoices, onVoicesChanged, speak, speechSupported } from '../components/fight/coach.ts'
 import { Segmented, SelectField, Switch } from '../components/Fields.tsx'
 import { formatDate, plural } from '../components/format.ts'
 import { Modal } from '../components/Modal.tsx'
@@ -13,6 +14,7 @@ import { Toast, type ToastMessage } from '../components/Toast.tsx'
 import {
   backupFileName,
   BackupError,
+  COACH_RATES,
   backupToCsv,
   DEFAULT_SETTINGS,
   deleteAllData,
@@ -128,6 +130,8 @@ export function SettingsScreen() {
         />
       </section>
 
+      <CoachSettings voiceURI={settings.coachVoice} rate={settings.coachRate} />
+
       <section className={styles.section} aria-labelledby="data">
         <h2 id="data">Your data</h2>
         <p className={styles.text}>
@@ -224,5 +228,45 @@ function DeleteAllDialog({ onCancel, onConfirm }: { onCancel: () => void; onConf
         </div>
       </div>
     </Modal>
+  )
+}
+
+const RATE_LABELS: Record<(typeof COACH_RATES)[number], string> = { 0.85: 'Slow', 1: 'Normal', 1.2: 'Fast' }
+
+function CoachSettings({ voiceURI, rate }: { voiceURI: string | null; rate: number }) {
+  // The phone loads its voices a moment after the page; refresh the list when it does.
+  const [voices, setVoices] = useState(englishVoices)
+  useEffect(() => onVoicesChanged(() => setVoices(englishVoices())), [])
+  const supported = speechSupported()
+
+  return (
+    <section className={styles.section} aria-labelledby="coach">
+      <h2 id="coach">Fight coach</h2>
+      {supported ? (
+        <>
+          <SelectField
+            label="Voice"
+            value={voiceURI ?? ''}
+            options={[
+              { value: '', label: 'Phone default' },
+              ...voices.map((v) => ({ value: v.voiceURI, label: `${v.name} (${v.lang})` })),
+            ]}
+            onChange={(v) => void updateSettings({ coachVoice: v || null })}
+            hint="More voices: iPhone Settings → Accessibility → Spoken Content → Voices."
+          />
+          <Segmented
+            label="Speed"
+            value={String(rate)}
+            options={COACH_RATES.map((r) => ({ value: String(r), label: RATE_LABELS[r] }))}
+            onChange={(v) => void updateSettings({ coachRate: Number(v) })}
+          />
+          <Button block onClick={() => speak('1 2, slip, 3. Rear kick.', { voiceURI, rate })}>
+            Test voice
+          </Button>
+        </>
+      ) : (
+        <p className={styles.text}>This browser can’t speak, so the coach shows combos on screen only.</p>
+      )}
+    </section>
   )
 }

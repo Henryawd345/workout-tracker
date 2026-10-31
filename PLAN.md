@@ -36,8 +36,8 @@ Out of scope for v1: AI coaching, social features, smartwatch, cloud sync, accou
 
 ## 2. Screen structure
 
-Bottom tab bar (always visible except during an active workout):
-**Today · Routines · History · Progress**. Settings = gear icon in the top-right of Today.
+Bottom tab bar (always visible except during an active workout or fight session):
+**Today · Routines · Fight · History · Progress**. Settings = gear icon in the top-right of Today.
 
 ### Today
 - **Resume card** (only if a workout is unfinished): name, elapsed time, sets done → *Resume*.
@@ -89,9 +89,16 @@ Bottom tab bar (always visible except during an active workout):
 - **Personal records:** heaviest weight, most reps, best session volume, longest time — each links to its workout.
 - **Workouts per week** bar chart.
 
+### Fight
+- **Sports:** Boxing · Muay Thai · Kickboxing · Wrestling (cards). A session in progress shows a *Resume* button on top.
+- **Setup** (per sport, pre-filled with your last choices): round length 1/2/3/5 min · rounds 1–12 (− / +) · rest 30 s/1/2 min · intensity Easy/Medium/Hard · total time · **Start**.
+- **Session** (full screen): phase (Get ready / Round 2 of 3 / Rest), big countdown and progress bar, **the current combo in big text**, Pause/Resume, End (saves full rounds, or discards if none), Minimise (the session and the coach keep running; a "session in progress" bar stays on every tab). After a reload iOS needs one tap to turn sound back on, so the screen offers it. The coach (phone text-to-speech) says "Round 2", the combos, "Rest" and "Time"; a bell rings at the start (once) and end (three times) of each round and two knocks warn at 10 s. The screen is kept awake where the phone allows it.
+- **Summary:** rounds done / planned, round length, time, note → *Done*.
+
 ### Settings
 - Units: **kg / lb** (display unit; stored values are never altered).
 - Default rest time; auto-start rest timer on/off.
+- Fight coach: voice (English voices on the phone), speed (slow/normal/fast), *Test voice*.
 - **Export** data: JSON (full backup) and CSV (one row per set, for spreadsheets).
 - **Import** a JSON backup.
 - **Delete all data** (type DELETE to confirm).
@@ -189,6 +196,8 @@ interface Settings {               // single record, id = 'settings'
   displayUnit: WeightUnit;
   defaultRestSec: number;          // default 90
   autoStartRest: boolean;          // default true
+  coachVoice: string | null;       // fight coach voice; null = phone default
+  coachRate: number;               // fight coach speed, default 1
 }
 
 // —— Fight trainer (database version 2) ——
@@ -257,7 +266,7 @@ The order builds the **thinnest complete flow first** (phases 0–5), then deepe
 - [x] **10. Reliability & polish** — Home Screen tip on iPhone; offline cache verified from the build; persistent storage requested at start; axe accessibility scan (light + dark) of every main screen and the active workout; README with deploy + install steps; GitHub Pages workflow. **Left for you:** put it online (needs your GitHub/Netlify account) and check on the iPhone, installed to the Home Screen: saving a backup opens the share sheet; dragging a routine’s exercises; the rest-timer beep with the phone locked. (If History gets slow after years of data: store per-workout summary fields or page the list.)
 
 - [x] **11. Fight data** — sessions, combos, combo generator, fight clock maths; backup version 2 (still reads version 1); delete-all includes the new tables. No UI yet.
-- [ ] **12. Fight tab + live session** — Fight tab (5 tabs), sport cards, setup (round length 1/2/3/5 min, rounds 1–12, rest 30 s/1/2 min, intensity), full-screen session with big countdown and the combo in big text, voice coach (phone text-to-speech), bell and 10 s warning, keep screen awake, resume after reload, in-progress bar, summary; coach voice and speed in Settings.
+- [x] **12. Fight tab + live session** — Fight tab (5 tabs), sport cards, setup (round length 1/2/3/5 min, rounds 1–12, rest 30 s/1/2 min, intensity), full-screen session with big countdown and the combo in big text, voice coach (phone text-to-speech), bell and 10 s warning, keep screen awake, resume after reload, in-progress bar, summary; coach voice and speed in Settings.
 - [ ] **13. Own combos + History** — combo list per sport (add, test-speak, delete with undo); fight sessions in History list, calendar and a detail screen (note, delete); counted in Today's "This week". Not in Progress charts yet.
 
 ### How agents are used here

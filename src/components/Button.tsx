@@ -22,12 +22,13 @@ interface ButtonLinkProps {
   to: string
   variant?: Variant
   block?: boolean
+  onClick?: () => void
   children: ReactNode
 }
 
-export function ButtonLink({ to, variant = 'secondary', block, children }: ButtonLinkProps) {
+export function ButtonLink({ to, variant = 'secondary', block, onClick, children }: ButtonLinkProps) {
   return (
-    <Link to={to} className={classes(variant, block)}>
+    <Link to={to} className={classes(variant, block)} onClick={onClick}>
       {children}
     </Link>
   )

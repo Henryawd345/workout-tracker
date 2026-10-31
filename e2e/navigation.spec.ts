@@ -5,7 +5,7 @@ test('tabs are reachable and large enough to tap', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible()
 
   const nav = page.getByRole('navigation', { name: 'Main' })
-  for (const name of ['Routines', 'History', 'Progress', 'Today']) {
+  for (const name of ['Routines', 'Fight', 'History', 'Progress', 'Today']) {
     const tab = nav.getByRole('link', { name })
     const box = await tab.boundingBox()
     expect(box?.height, `${name} tab height`).toBeGreaterThanOrEqual(48)

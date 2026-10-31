@@ -2,6 +2,7 @@ import { db, ensureSeedExercises } from './db.ts'
 import { nowIso } from './ids.ts'
 import { getSettings } from './settings.ts'
 import {
+  COACH_RATES,
   DEFAULT_SETTINGS,
   EQUIPMENT,
   INTENSITIES,
@@ -355,6 +356,13 @@ export function parseBackup(text: string, now: string = nowIso()): Backup {
           ? settings.defaultRestSec
           : DEFAULT_SETTINGS.defaultRestSec,
       autoStartRest: typeof settings.autoStartRest === 'boolean' ? settings.autoStartRest : DEFAULT_SETTINGS.autoStartRest,
+      coachVoice: isStr(settings.coachVoice) ? settings.coachVoice : DEFAULT_SETTINGS.coachVoice,
+      coachRate:
+        typeof settings.coachRate === 'number' && Number.isFinite(settings.coachRate)
+          ? COACH_RATES.reduce((best, r) =>
+              Math.abs(r - (settings.coachRate as number)) < Math.abs(best - (settings.coachRate as number)) ? r : best,
+            )
+          : DEFAULT_SETTINGS.coachRate,
     },
     exercises,
     routines,

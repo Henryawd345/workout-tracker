@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router'
-import { HistoryIcon, ProgressIcon, RoutinesIcon, TodayIcon } from './icons.tsx'
+import { GloveIcon, HistoryIcon, ProgressIcon, RoutinesIcon, TodayIcon } from './icons.tsx'
 import styles from './TabBar.module.css'
 
 const tabs = [
   { to: '/today', label: 'Today', Icon: TodayIcon },
   { to: '/routines', label: 'Routines', Icon: RoutinesIcon },
+  { to: '/fight', label: 'Fight', Icon: GloveIcon },
   { to: '/history', label: 'History', Icon: HistoryIcon },
   { to: '/progress', label: 'Progress', Icon: ProgressIcon },
 ]

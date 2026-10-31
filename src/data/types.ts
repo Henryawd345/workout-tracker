@@ -131,3 +131,51 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultRestSec: 90,
   autoStartRest: true,
 }
+
+// —— Fight trainer ——
+
+export const SPORTS = ['boxing', 'muay_thai', 'kickboxing', 'wrestling'] as const
+export type Sport = (typeof SPORTS)[number]
+
+export const INTENSITIES = ['easy', 'medium', 'hard'] as const
+export type Intensity = (typeof INTENSITIES)[number]
+
+/**
+ * Stored as time passed, not as the current phase, so the phase can always be worked out
+ * again after a reload or a locked screen (see fightClock.ts).
+ */
+export interface FightClock {
+  /** Set while running. */
+  runningSince: string | null
+  /** Seconds counted before the last pause. */
+  elapsedBeforeSec: number
+}
+
+export interface FightPlan {
+  sport: Sport
+  intensity: Intensity
+  roundSec: number
+  restSec: number
+  rounds: number
+}
+
+export interface FightSession extends FightPlan {
+  id: ID
+  status: WorkoutStatus
+  startedAt: string
+  endedAt: string | null
+  clock: FightClock
+  /** Set when finished; only full rounds count. */
+  completedRounds: number
+  note: string
+  updatedAt: string
+}
+
+/** A combo the user typed, mixed in with the random ones, e.g. "1 2 3 slip 2". */
+export interface CustomCombo {
+  id: ID
+  sport: Sport
+  text: string
+  createdAt: string
+  updatedAt: string
+}

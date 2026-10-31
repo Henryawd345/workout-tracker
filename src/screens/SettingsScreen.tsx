@@ -80,8 +80,10 @@ export function SettingsScreen() {
     try {
       const r = await importBackup(backup, mode)
       say(
-        `Imported ${plural(r.workouts, 'workout')} and ${plural(r.routines, 'routine')}` +
-          (r.skippedActive ? ' (kept your workout in progress)' : '') +
+        `Imported ${plural(r.workouts, 'workout')}` +
+          (r.fightSessions > 0 ? `, ${plural(r.fightSessions, 'fight session')}` : '') +
+          ` and ${plural(r.routines, 'routine')}` +
+          (r.skippedActive ? ' (kept what’s in progress on this phone)' : '') +
           (r.keptNewer > 0 ? `; kept ${plural(r.keptNewer, 'newer item')} from this phone` : ''),
       )
     } catch {

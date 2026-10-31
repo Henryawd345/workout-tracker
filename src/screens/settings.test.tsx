@@ -36,7 +36,7 @@ describe('settings', () => {
     expect(await screen.findByText('Backup saved')).toBeInTheDocument()
     expect(click).toHaveBeenCalled()
     const saved = JSON.parse(await created[0].text())
-    expect(saved).toMatchObject({ app: 'workout-tracker', version: 1 })
+    expect(saved).toMatchObject({ app: 'workout-tracker', version: 2 })
     expect(saved.workouts).toHaveLength(1)
   })
 

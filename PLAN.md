@@ -190,13 +190,40 @@ interface Settings {               // single record, id = 'settings'
   defaultRestSec: number;          // default 90
   autoStartRest: boolean;          // default true
 }
+
+// —— Fight trainer (database version 2) ——
+type Sport = 'boxing' | 'muay_thai' | 'kickboxing' | 'wrestling';
+type Intensity = 'easy' | 'medium' | 'hard';
+
+interface FightClock {               // time passed, not the phase — the phase is worked out from it
+  runningSince: string | null;     // set while running
+  elapsedBeforeSec: number;        // counted before the last pause
+}
+
+interface FightSession {
+  id: ID;
+  sport: Sport; intensity: Intensity;
+  roundSec: number; restSec: number; rounds: number;   // the plan
+  status: 'active' | 'completed';
+  startedAt: string; endedAt: string | null;
+  clock: FightClock;
+  completedRounds: number;         // set when finished; only full rounds count
+  note: string;
+  updatedAt: string;
+}
+
+interface CustomCombo {            // typed by the user, mixed in with random combos
+  id: ID; sport: Sport; text: string;   // "1 2 3 slip 2"
+  createdAt: string; updatedAt: string;
+}
 ```
 
 **Database indexes (Dexie):**
 `exercises: id, name, *muscleGroups, equipment` ·
 `routines: id, updatedAt` ·
 `workouts: id, status, startedAt, *exerciseIds` ·
-`settings: id`
+`settings: id` ·
+version 2 adds `fightSessions: id, status, startedAt` · `combos: id, sport`
 
 ### Rules that the code must follow
 - **Conversion:** 1 lb = 0.45359237 kg exactly. Convert only for display and charts; round the display to 0.1.
@@ -207,6 +234,8 @@ interface Settings {               // single record, id = 'settings'
 - **Rest timer** is based on the `endsAt` timestamp, not on counting ticks, so it stays correct after the phone locks or the app is closed. It starts when a set is ticked (if auto-start is on and the exercise has a rest time); un-ticking a set leaves a running rest alone. It beeps once when it runs out while the app is open (not for a rest that ended while closed, nor when you shorten it to zero yourself).
 - **Deleting a custom exercise** that appears in history archives it instead.
 - **Volume** = Σ(weight × reps) over completed sets, converted to the display unit.
+- **Fight clock:** a 10 s get-ready, then round, rest, round … last round. The phase is always worked out from the stored `FightClock`, so it's right after a reload or a locked screen. A session counts only **full rounds**; with none it can only be discarded. Its time is how long it ran (pauses not included), so it can include part of an unfinished round. If the last round ended while the app was closed, the session ends at the last bell.
+- **Combos:** punches are numbers (1 jab, 2 cross, 3 lead hook, 4 rear hook, 5 lead uppercut, 6 rear uppercut); kicks, knees, elbows and defence are words. Easy = 1–2 punches; medium = 2–4 with some defence (and kicks at the end, for kickboxing/Muay Thai); hard = 3–6 with defence and kicks/knees/elbows. Never starts with defence, never two defence moves or three of the same move in a row, never the same combo twice running. Wrestling calls drills (shot, sprawl …; chains like "sprawl, re-shot" when hard). The gap after a call grows with its length and shrinks with intensity. With your own combos saved, about 1 call in 3 is one of them.
 
 ---
 
@@ -226,6 +255,10 @@ The order builds the **thinnest complete flow first** (phases 0–5), then deepe
 - [x] **8. Progress** — per-exercise charts, time ranges, PRs, workouts-per-week.
 - [x] **9. Settings & data** — units, rest defaults, export JSON/CSV, import JSON, delete all.
 - [x] **10. Reliability & polish** — Home Screen tip on iPhone; offline cache verified from the build; persistent storage requested at start; axe accessibility scan (light + dark) of every main screen and the active workout; README with deploy + install steps; GitHub Pages workflow. **Left for you:** put it online (needs your GitHub/Netlify account) and check on the iPhone, installed to the Home Screen: saving a backup opens the share sheet; dragging a routine’s exercises; the rest-timer beep with the phone locked. (If History gets slow after years of data: store per-workout summary fields or page the list.)
+
+- [x] **11. Fight data** — sessions, combos, combo generator, fight clock maths; backup version 2 (still reads version 1); delete-all includes the new tables. No UI yet.
+- [ ] **12. Fight tab + live session** — Fight tab (5 tabs), sport cards, setup (round length 1/2/3/5 min, rounds 1–12, rest 30 s/1/2 min, intensity), full-screen session with big countdown and the combo in big text, voice coach (phone text-to-speech), bell and 10 s warning, keep screen awake, resume after reload, in-progress bar, summary; coach voice and speed in Settings.
+- [ ] **13. Own combos + History** — combo list per sport (add, test-speak, delete with undo); fight sessions in History list, calendar and a detail screen (note, delete); counted in Today's "This week". Not in Progress charts yet.
 
 ### How agents are used here
 - **Main agent:** plans and builds each phase in order. Phases 0–4 all touch the shared data types, so they run one at a time.

@@ -4,8 +4,12 @@ import { getSettings } from './settings.ts'
 import {
   DEFAULT_SETTINGS,
   EQUIPMENT,
+  INTENSITIES,
   MUSCLE_GROUPS,
+  SPORTS,
+  type CustomCombo,
   type Exercise,
+  type FightSession,
   type PlannedSet,
   type RestTimer,
   type Routine,
@@ -17,7 +21,7 @@ import {
 import { formatNumber } from './units.ts'
 
 export const BACKUP_APP = 'workout-tracker'
-export const BACKUP_VERSION = 1
+export const BACKUP_VERSION = 2
 
 export interface Backup {
   app: typeof BACKUP_APP
@@ -27,11 +31,14 @@ export interface Backup {
   exercises: Exercise[]
   routines: Routine[]
   workouts: Workout[]
+  /** Added in version 2; empty when reading a version 1 file. */
+  fightSessions: FightSession[]
+  combos: CustomCombo[]
 }
 
 /** Everything, as one object. Includes built-in exercises so their notes come along. */
 export async function exportBackup(now: string = nowIso()): Promise<Backup> {
-  return db.transaction('r', db.exercises, db.routines, db.workouts, db.settings, async () => ({
+  return db.transaction('r', [db.exercises, db.routines, db.workouts, db.settings, db.fightSessions, db.combos], async () => ({
     app: BACKUP_APP,
     version: BACKUP_VERSION,
     exportedAt: now,
@@ -39,6 +46,8 @@ export async function exportBackup(now: string = nowIso()): Promise<Backup> {
     exercises: await db.exercises.toArray(),
     routines: await db.routines.toArray(),
     workouts: await db.workouts.toArray(),
+    fightSessions: await db.fightSessions.toArray(),
+    combos: await db.combos.toArray(),
   }))
 }
 
@@ -243,6 +252,62 @@ function readWorkout(w: unknown, now: string): Workout {
   }
 }
 
+const isInt = (v: unknown, min: number, max: number): v is number =>
+  typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max
+
+function readFightSession(f: unknown, now: string): FightSession {
+  need(isObj(f), 'fight sessions')
+  const x = f as Obj
+  need(isStr(x.id) && isDate(x.startedAt), 'fight sessions')
+  need(SPORTS.includes(x.sport as never) && INTENSITIES.includes(x.intensity as never), 'fight sessions')
+  need(isInt(x.rounds, 1, 12) && isInt(x.roundSec, 10, 600) && isInt(x.restSec, 0, 300), 'fight sessions')
+  need(x.status === 'active' || x.status === 'completed', 'fight sessions')
+  const completed = x.status === 'completed'
+  need(!completed || (isDate(x.endedAt) && Date.parse(x.endedAt) >= Date.parse(x.startedAt as string)), 'fight sessions')
+  need(!completed || isInt(x.completedRounds, 1, x.rounds as number), 'fight sessions')
+  need(isObj(x.clock), 'fight sessions')
+  const clock = x.clock as Obj
+  const elapsed = amount(clock.elapsedBeforeSec, 'fight sessions') ?? 0
+  const runningSince = isDate(clock.runningSince) && !completed ? clock.runningSince : null
+  return {
+    id: x.id as string,
+    sport: x.sport as FightSession['sport'],
+    intensity: x.intensity as FightSession['intensity'],
+    roundSec: x.roundSec as number,
+    restSec: x.restSec as number,
+    rounds: x.rounds as number,
+    status: x.status as FightSession['status'],
+    startedAt: x.startedAt as string,
+    endedAt: completed ? (x.endedAt as string) : null,
+    clock: { runningSince, elapsedBeforeSec: elapsed },
+    completedRounds: completed ? (x.completedRounds as number) : 0,
+    note: str(x.note),
+    updatedAt: date(x.updatedAt, now),
+  }
+}
+
+function readCombo(c: unknown, now: string): CustomCombo {
+  need(isObj(c), 'combos')
+  const x = c as Obj
+  need(isStr(x.id) && SPORTS.includes(x.sport as never) && isStr(x.text), 'combos')
+  const text = (x.text as string).replace(/\s+/g, ' ').trim()
+  need(text !== '' && text.length <= 60, 'combos')
+  return {
+    id: x.id as string,
+    sport: x.sport as CustomCombo['sport'],
+    text,
+    createdAt: date(x.createdAt, now),
+    updatedAt: date(x.updatedAt, now),
+  }
+}
+
+/** A version 2 list, or empty when a version 1 file doesn't have it. */
+function optionalList(v: unknown, part: string): unknown[] {
+  if (v === undefined) return []
+  need(Array.isArray(v), part)
+  return v as unknown[]
+}
+
 /** Largest backup file accepted (years of daily workouts are far below this). */
 export const MAX_BACKUP_BYTES = 20 * 1024 * 1024
 
@@ -265,6 +330,8 @@ export function parseBackup(text: string, now: string = nowIso()): Backup {
   const exercises = (data.exercises as unknown[]).map((e) => readExercise(e, now))
   const routines = (data.routines as unknown[]).map((r) => readRoutine(r, now))
   const workouts = (data.workouts as unknown[]).map((w) => readWorkout(w, now))
+  const fightSessions = optionalList(data.fightSessions, 'fight sessions').map((f) => readFightSession(f, now))
+  const combos = optionalList(data.combos, 'combos').map((c) => readCombo(c, now))
 
   const known = new Set(exercises.map((e) => e.id))
   const missing = [...workouts.flatMap((w) => w.exercises), ...routines.flatMap((r) => r.exercises)].find(
@@ -272,6 +339,9 @@ export function parseBackup(text: string, now: string = nowIso()): Backup {
   )
   if (missing) throw new BackupError('The backup refers to an exercise it doesn’t contain.')
   if (workouts.filter((w) => w.status === 'active').length > 1) throw new BackupError('The backup has two workouts in progress.')
+  if (fightSessions.filter((f) => f.status === 'active').length > 1) {
+    throw new BackupError('The backup has two fight sessions in progress.')
+  }
 
   const settings = isObj(data.settings) ? data.settings : {}
   return {
@@ -289,11 +359,14 @@ export function parseBackup(text: string, now: string = nowIso()): Backup {
     exercises,
     routines,
     workouts,
+    fightSessions,
+    combos,
   }
 }
 
 export interface ImportResult {
   workouts: number
+  fightSessions: number
   routines: number
   exercises: number
   skippedActive: boolean
@@ -314,12 +387,15 @@ function newerThanHere<T extends { id: string; updatedAt: string }>(incoming: T[
  * is already in progress here — there can only be one.
  */
 export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): Promise<ImportResult> {
-  const result = await db.transaction('rw', db.exercises, db.routines, db.workouts, db.settings, async () => {
-    let { exercises, routines, workouts } = backup
+  const tables = [db.exercises, db.routines, db.workouts, db.settings, db.fightSessions, db.combos]
+  const result = await db.transaction('rw', tables, async () => {
+    let { exercises, routines, workouts, fightSessions, combos } = backup
     let skippedActive = false
     let keptNewer = 0
     if (mode === 'replace') {
-      await Promise.all([db.exercises.clear(), db.routines.clear(), db.workouts.clear(), db.settings.clear()])
+      // A version 1 file has no fight data, so keep what's here rather than wiping it.
+      const cleared = backup.version < 2 ? tables.filter((t) => t !== db.fightSessions && t !== db.combos) : tables
+      await Promise.all(cleared.map((t) => t.clear()))
       await db.settings.put({ id: 'settings', ...backup.settings })
     } else {
       const active = await db.workouts.where('status').equals('active').first()
@@ -328,17 +404,32 @@ export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): P
         workouts = workouts.filter((w) => w.status !== 'active' || w.id === active.id)
         skippedActive = workouts.length < before
       }
-      const total = exercises.length + routines.length + workouts.length
+      const activeFight = await db.fightSessions.where('status').equals('active').first()
+      if (activeFight) {
+        const before = fightSessions.length
+        fightSessions = fightSessions.filter((f) => f.status !== 'active' || f.id === activeFight.id)
+        skippedActive ||= fightSessions.length < before
+      }
+      const total = exercises.length + routines.length + workouts.length + fightSessions.length + combos.length
       exercises = newerThanHere(exercises, await db.exercises.bulkGet(exercises.map((e) => e.id)))
       routines = newerThanHere(routines, await db.routines.bulkGet(routines.map((r) => r.id)))
       workouts = newerThanHere(workouts, await db.workouts.bulkGet(workouts.map((w) => w.id)))
-      keptNewer = total - exercises.length - routines.length - workouts.length
+      fightSessions = newerThanHere(fightSessions, await db.fightSessions.bulkGet(fightSessions.map((f) => f.id)))
+      combos = newerThanHere(combos, await db.combos.bulkGet(combos.map((c) => c.id)))
+      const hereCombos = await db.combos.toArray()
+      combos = combos.filter(
+        (c) => !hereCombos.some((h) => h.id !== c.id && h.sport === c.sport && h.text.toLowerCase() === c.text.toLowerCase()),
+      )
+      keptNewer = total - exercises.length - routines.length - workouts.length - fightSessions.length - combos.length
     }
     await db.exercises.bulkPut(exercises)
     await db.routines.bulkPut(routines)
     await db.workouts.bulkPut(workouts)
+    await db.fightSessions.bulkPut(fightSessions)
+    await db.combos.bulkPut(combos)
     return {
       workouts: workouts.filter((w) => w.status === 'completed').length,
+      fightSessions: fightSessions.filter((f) => f.status === 'completed').length,
       routines: routines.length,
       exercises: exercises.filter((e) => e.isCustom).length,
       skippedActive,
@@ -349,10 +440,14 @@ export async function importBackup(backup: Backup, mode: 'replace' | 'merge'): P
   return result
 }
 
-/** Deletes every workout, routine, custom exercise, note and setting. Built-in exercises come back fresh. */
+/**
+ * Deletes every workout, fight session, combo, routine, custom exercise, note and setting.
+ * Built-in exercises come back fresh.
+ */
 export async function deleteAllData(): Promise<void> {
-  await db.transaction('rw', db.exercises, db.routines, db.workouts, db.settings, async () => {
-    await Promise.all([db.exercises.clear(), db.routines.clear(), db.workouts.clear(), db.settings.clear()])
+  const tables = [db.exercises, db.routines, db.workouts, db.settings, db.fightSessions, db.combos]
+  await db.transaction('rw', tables, async () => {
+    await Promise.all(tables.map((t) => t.clear()))
   })
   await ensureSeedExercises()
 }

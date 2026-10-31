@@ -1,6 +1,6 @@
 import { Dexie, type EntityTable } from 'dexie'
 import { SEED_EXERCISES } from './seedExercises.ts'
-import type { Exercise, Routine, Settings, Workout } from './types.ts'
+import type { CustomCombo, Exercise, FightSession, Routine, Settings, Workout } from './types.ts'
 
 export type SettingsRecord = Settings & { id: 'settings' }
 
@@ -9,17 +9,25 @@ export type WorkoutDB = Dexie & {
   routines: EntityTable<Routine, 'id'>
   workouts: EntityTable<Workout, 'id'>
   settings: EntityTable<SettingsRecord, 'id'>
+  fightSessions: EntityTable<FightSession, 'id'>
+  combos: EntityTable<CustomCombo, 'id'>
 }
 
 export const db = new Dexie('workout-tracker') as WorkoutDB
 
 // Only indexed fields are listed; every other field is still stored.
-// Changing this? Add db.version(2) below — never edit version 1.
+// Changing indexes or tables? Add a new db.version(n) below — never edit an old one.
 db.version(1).stores({
   exercises: 'id, name, *muscleGroups, equipment',
   routines: 'id, updatedAt',
   workouts: 'id, status, startedAt, *exerciseIds',
   settings: 'id',
+})
+
+// Fight trainer. Dexie keeps the version 1 tables as they are.
+db.version(2).stores({
+  fightSessions: 'id, status, startedAt',
+  combos: 'id, sport',
 })
 
 /** Adds any built-in exercises that aren't in the database yet (first run, or new ones in an update). */

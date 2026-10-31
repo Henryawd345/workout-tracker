@@ -10,6 +10,7 @@ import {
   parseBackup,
 } from './backup.ts'
 import { db } from './db.ts'
+import { addCombo, finishFightSession, getActiveFightSession, listCombos, listCompletedFightSessions, startFightSession } from './fight.ts'
 import { createCustomExercise, updateExercise } from './exercises.ts'
 import { createRoutine, newRoutineExercise } from './routines.ts'
 import { SEED_EXERCISES } from './seedExercises.ts'
@@ -38,7 +39,7 @@ describe('backup', () => {
     expect(await db.workouts.count()).toBe(0)
 
     const result = await importBackup(parseBackup(text), 'replace')
-    expect(result).toEqual({ workouts: 1, routines: 1, exercises: 1, skippedActive: false, keptNewer: 0 })
+    expect(result).toEqual({ workouts: 1, fightSessions: 0, routines: 1, exercises: 1, skippedActive: false, keptNewer: 0 })
     expect(await getSettings()).toMatchObject({ displayUnit: 'lb', defaultRestSec: 120 })
     expect((await db.exercises.get('ex-leg-press'))?.note).toBe('Seat 5')
     expect(await db.exercises.get(custom.id)).toMatchObject({ name: 'Sled Push', isCustom: true })
@@ -174,7 +175,84 @@ describe('delete all data', () => {
     expect((await getSettings()).displayUnit).toBe('kg')
   })
 
+  it('also removes fight sessions and combos', async () => {
+    await addCombo('boxing', '1 2')
+    await startFightSession(FIGHT, Date.now())
+    await deleteAllData()
+    expect(await db.fightSessions.count()).toBe(0)
+    expect(await db.combos.count()).toBe(0)
+  })
+
   it('names files by date', () => {
     expect(backupFileName('json', new Date(2026, 8, 3))).toBe('workout-tracker-2026-09-03.json')
+  })
+})
+
+const FIGHT = { sport: 'boxing' as const, intensity: 'hard' as const, roundSec: 60, restSec: 30, rounds: 2 }
+const T = Date.parse('2026-10-31T10:00:00.000Z')
+
+describe('fight sessions and combos in backups', () => {
+  it('round-trips finished sessions and combos', async () => {
+    const s = await startFightSession(FIGHT, T)
+    await finishFightSession(s.id, T + 75_000)
+    await addCombo('muay_thai', '1 2 rear kick')
+    const text = JSON.stringify(await exportBackup())
+    await deleteAllData()
+
+    const result = await importBackup(parseBackup(text), 'replace')
+    expect(result.fightSessions).toBe(1)
+    expect(await listCompletedFightSessions()).toEqual([expect.objectContaining({ ...FIGHT, completedRounds: 1 })])
+    expect((await listCombos('muay_thai')).map((c) => c.text)).toEqual(['1 2 rear kick'])
+  })
+
+  it('still reads a version 1 backup, which has no fight data', async () => {
+    await seedData()
+    const v1 = { ...(await exportBackup()), version: 1 } as Record<string, unknown>
+    delete v1.fightSessions
+    delete v1.combos
+    const backup = parseBackup(JSON.stringify(v1))
+    expect(backup.fightSessions).toEqual([])
+    expect(backup.combos).toEqual([])
+  })
+
+  it('replacing from a version 1 backup keeps the fight data here', async () => {
+    const v1 = { ...(await exportBackup()), version: 1 } as Record<string, unknown>
+    delete v1.fightSessions
+    delete v1.combos
+    await addCombo('boxing', '1 2')
+    await importBackup(parseBackup(JSON.stringify(v1)), 'replace')
+    expect(await listCombos('boxing')).toHaveLength(1)
+  })
+
+  it('merging does not add a combo you already have under another id', async () => {
+    await addCombo('boxing', '1 2')
+    const text = JSON.stringify(await exportBackup())
+    await db.combos.clear()
+    await addCombo('boxing', '1 2')
+    await importBackup(parseBackup(text), 'merge')
+    expect(await listCombos('boxing')).toHaveLength(1)
+  })
+
+  it('rejects damaged fight data', async () => {
+    const base = await exportBackup()
+    const s = { ...(await startFightSession(FIGHT, T)) }
+    const bad = (patch: object) => JSON.stringify({ ...base, fightSessions: [{ ...s, ...patch }] })
+    expect(() => parseBackup(bad({ rounds: 0 }))).toThrow(BackupError)
+    expect(() => parseBackup(bad({ sport: 'karate' }))).toThrow(BackupError)
+    expect(() => parseBackup(bad({ clock: null }))).toThrow(BackupError)
+    expect(() => parseBackup(bad({ status: 'completed', endedAt: s.startedAt, completedRounds: 0 }))).toThrow(BackupError)
+    expect(() => parseBackup(JSON.stringify({ ...base, combos: [{ id: 'c', sport: 'boxing', text: '  ' }] }))).toThrow(BackupError)
+    expect(() => parseBackup(JSON.stringify({ ...base, fightSessions: 'x' }))).toThrow(BackupError)
+  })
+
+  it('merging keeps the session in progress here and skips the backup\'s', async () => {
+    const theirs = await startFightSession(FIGHT, T)
+    const text = JSON.stringify(await exportBackup())
+    await db.fightSessions.clear()
+    const mine = await startFightSession(FIGHT, T + 1000)
+    const result = await importBackup(parseBackup(text), 'merge')
+    expect(result.skippedActive).toBe(true)
+    expect((await getActiveFightSession())?.id).toBe(mine.id)
+    expect(await db.fightSessions.get(theirs.id)).toBeUndefined()
   })
 })

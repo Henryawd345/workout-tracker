@@ -9,9 +9,11 @@ import {
   deleteFightSession,
   discardFightSession,
   EmptyFightSessionError,
+  fightPlanExtras,
   fightSessionDurationSec,
   finishFightSession,
   getActiveFightSession,
+  hasBurst,
   lastFightPlan,
   listCombos,
   listCompletedFightSessions,
@@ -38,7 +40,23 @@ describe('fight sessions', () => {
     await expect(startFightSession(plan, T)).rejects.toBeInstanceOf(ActiveFightSessionExistsError)
   })
 
+  it('keeps the coach mode, burst and warm-up, with defaults for older plans', async () => {
+    const s = await startFightSession({ ...plan, coachMode: 'timer', burst: false, warmupSec: 60 }, T)
+    expect(s).toMatchObject({ coachMode: 'timer', burst: false, warmupSec: 60 })
+    expect(fightPlanExtras({ ...plan })).toEqual({ coachMode: 'combos', burst: true, warmupSec: 0 })
+    await expect(startFightSession({ ...plan, warmupSec: 45 }, T + 1)).rejects.toThrow() // one is already active
+  })
+
+  it('has the burst on medium and hard combos, and in timer-only rounds, unless switched off', () => {
+    expect(hasBurst({ ...plan, intensity: 'medium' })).toBe(true)
+    expect(hasBurst({ ...plan, intensity: 'easy' })).toBe(false)
+    expect(hasBurst({ ...plan, intensity: 'easy', coachMode: 'timer' })).toBe(true)
+    expect(hasBurst({ ...plan, burst: false })).toBe(false)
+  })
+
   it('refuses a plan that makes no sense', async () => {
+    await expect(startFightSession({ ...plan, warmupSec: 45 }, T)).rejects.toThrow('isn’t valid')
+    await expect(startFightSession({ ...plan, coachMode: 'silent' as never }, T)).rejects.toThrow('isn’t valid')
     await expect(startFightSession({ ...plan, rounds: 0 }, T)).rejects.toThrow('isn’t valid')
     await expect(startFightSession({ ...plan, roundSec: 2 }, T)).rejects.toThrow('isn’t valid')
     await expect(startFightSession({ ...plan, sport: 'karate' as never }, T)).rejects.toThrow('isn’t valid')
@@ -115,7 +133,7 @@ describe('fight sessions', () => {
     expect(await lastFightPlan('muay_thai')).toEqual(DEFAULT_FIGHT_PLANS.muay_thai)
     const s = await startFightSession({ ...plan, rounds: 5, roundSec: 120 }, T)
     await finishFightSession(s.id, at(READY_SEC + 120))
-    expect(await lastFightPlan('boxing')).toEqual({ ...plan, rounds: 5, roundSec: 120 })
+    expect(await lastFightPlan('boxing')).toEqual({ ...plan, rounds: 5, roundSec: 120, coachMode: 'combos', burst: true, warmupSec: 0 })
     expect(await lastFightPlan('wrestling')).toEqual(DEFAULT_FIGHT_PLANS.wrestling)
   })
 })

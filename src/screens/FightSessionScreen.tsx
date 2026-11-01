@@ -10,7 +10,7 @@ import { IconButton } from '../components/IconButton.tsx'
 import { ChevronDownIcon } from '../components/icons.tsx'
 import { EmptyState, Screen } from '../components/Screen.tsx'
 import { audioReady } from '../components/workout/alerts.ts'
-import { formatDuration, getFightSession, type ClockState } from '../data/index.ts'
+import { fightPlanExtras, formatDuration, getFightSession, type ClockState } from '../data/index.ts'
 import { wakeLockSupported } from '../hooks/useWakeLock.ts'
 import styles from './FightSessionScreen.module.css'
 
@@ -52,6 +52,8 @@ function phaseLabel(state: ClockState, rounds: number): string {
   switch (state.phase) {
     case 'ready':
       return 'Get ready'
+    case 'warmup':
+      return 'Warm-up'
     case 'round':
       return `Round ${state.round} of ${rounds}`
     case 'rest':
@@ -108,12 +110,14 @@ function LiveSession({ fight }: { fight: LiveFight }) {
           {state.paused
             ? 'Paused'
             : state.phase === 'round'
-              ? (call?.text ?? '')
-              : state.phase === 'rest'
-                ? 'Breathe. Shake it out.'
-                : state.phase === 'ready'
-                  ? 'Hands up'
-                  : ''}
+              ? (call?.text ?? (fightPlanExtras(session).coachMode === 'timer' ? 'Your round' : ''))
+              : state.phase === 'warmup'
+                ? 'Warm up: rope, footwork'
+                : state.phase === 'rest'
+                  ? 'Breathe. Shake it out.'
+                  : state.phase === 'ready'
+                    ? 'Hands up'
+                    : ''}
         </p>
 
         <Button

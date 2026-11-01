@@ -57,7 +57,9 @@ function FightInProgressBar() {
         ? 'Rest'
         : state.phase === 'ready'
           ? 'Get ready'
-          : 'Finished'
+          : state.phase === 'warmup'
+            ? 'Warm-up'
+            : 'Finished'
   return (
     <Link to="/fight/session" className={styles.progressBar} onClick={unlockFightSound}>
       <span className={styles.pulse} aria-hidden="true" />

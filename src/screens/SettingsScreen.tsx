@@ -15,6 +15,7 @@ import {
   backupFileName,
   BackupError,
   COACH_RATES,
+  moveName,
   backupToCsv,
   DEFAULT_SETTINGS,
   deleteAllData,
@@ -25,6 +26,7 @@ import {
   parseBackup,
   updateSettings,
   type Backup,
+  type Stance,
   type WeightUnit,
 } from '../data/index.ts'
 import styles from './SettingsScreen.module.css'
@@ -130,7 +132,7 @@ export function SettingsScreen() {
         />
       </section>
 
-      <CoachSettings voiceURI={settings.coachVoice} rate={settings.coachRate} />
+      <CoachSettings voiceURI={settings.coachVoice} rate={settings.coachRate} stance={settings.stance} />
 
       <section className={styles.section} aria-labelledby="data">
         <h2 id="data">Your data</h2>
@@ -233,7 +235,7 @@ function DeleteAllDialog({ onCancel, onConfirm }: { onCancel: () => void; onConf
 
 const RATE_LABELS: Record<(typeof COACH_RATES)[number], string> = { 0.85: 'Slow', 1: 'Normal', 1.2: 'Fast' }
 
-function CoachSettings({ voiceURI, rate }: { voiceURI: string | null; rate: number }) {
+function CoachSettings({ voiceURI, rate, stance }: { voiceURI: string | null; rate: number; stance: Stance }) {
   // The phone loads its voices a moment after the page; refresh the list when it does.
   const [voices, setVoices] = useState(englishVoices)
   useEffect(() => onVoicesChanged(() => setVoices(englishVoices())), [])
@@ -242,6 +244,16 @@ function CoachSettings({ voiceURI, rate }: { voiceURI: string | null; rate: numb
   return (
     <section className={styles.section} aria-labelledby="coach">
       <h2 id="coach">Fight coach</h2>
+      <Segmented<Stance>
+        label="Stance"
+        value={stance}
+        options={[
+          { value: 'orthodox', label: 'Orthodox' },
+          { value: 'southpaw', label: 'Southpaw' },
+        ]}
+        onChange={(s) => void updateSettings({ stance: s })}
+        hint="Orthodox: left foot forward. Southpaw: right foot forward. The coach says left and right to match."
+      />
       {supported ? (
         <>
           <SelectField
@@ -260,7 +272,7 @@ function CoachSettings({ voiceURI, rate }: { voiceURI: string | null; rate: numb
             options={COACH_RATES.map((r) => ({ value: String(r), label: RATE_LABELS[r] }))}
             onChange={(v) => void updateSettings({ coachRate: Number(v) })}
           />
-          <Button block onClick={() => speak('1 2, slip, 3. Rear kick.', { voiceURI, rate })}>
+          <Button block onClick={() => speak(`1 2, ${moveName('slip lead', stance)}, 3. ${moveName('rear kick', stance)}.`, { voiceURI, rate })}>
             Test voice
           </Button>
         </>

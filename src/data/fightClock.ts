@@ -7,11 +7,11 @@ import type { FightClock, FightPlan } from './types.ts'
 /** Countdown before round 1, to get your hands up. */
 export const READY_SEC = 10
 
-export type FightPhase = 'ready' | 'round' | 'rest' | 'done'
+export type FightPhase = 'ready' | 'warmup' | 'round' | 'rest' | 'done'
 
 export interface ClockState {
   phase: FightPhase
-  /** 1-based round number; during rest, the round just finished. 0 while getting ready. */
+  /** 1-based round number; during rest, the round just finished. 0 before round 1. */
   round: number
   /** Whole seconds left in this phase (rounded up). */
   remainingSec: number
@@ -24,7 +24,7 @@ export interface ClockState {
   paused: boolean
 }
 
-type Plan = Pick<FightPlan, 'roundSec' | 'restSec' | 'rounds'>
+type Plan = Pick<FightPlan, 'roundSec' | 'restSec' | 'rounds' | 'warmupSec'>
 
 interface Segment {
   phase: Exclude<FightPhase, 'done'>
@@ -34,6 +34,12 @@ interface Segment {
 
 function schedule(plan: Plan): Segment[] {
   const segments: Segment[] = [{ phase: 'ready', round: 0, sec: READY_SEC }]
+  // Optional warm-up (e.g. jump rope), then the usual rest before round 1.
+  const warmup = plan.warmupSec ?? 0
+  if (warmup > 0) {
+    segments.push({ phase: 'warmup', round: 0, sec: warmup })
+    if (plan.restSec > 0) segments.push({ phase: 'rest', round: 0, sec: plan.restSec })
+  }
   for (let round = 1; round <= plan.rounds; round++) {
     segments.push({ phase: 'round', round, sec: plan.roundSec })
     if (round < plan.rounds && plan.restSec > 0) segments.push({ phase: 'rest', round, sec: plan.restSec })

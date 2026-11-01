@@ -5,10 +5,13 @@ import { BackButton } from '../components/BackButton.tsx'
 import { Button, ButtonLink } from '../components/Button.tsx'
 import { unlockFightSound } from '../components/fight/coach.ts'
 import { INTENSITY_LABELS, isSport, secLabel, SPORT_LABELS } from '../components/fight/labels.ts'
-import { Segmented } from '../components/Fields.tsx'
+import { Segmented, Switch } from '../components/Fields.tsx'
 import { Screen } from '../components/Screen.tsx'
 import {
   ActiveFightSessionExistsError,
+  BURST_SEC,
+  fightPlanExtras,
+  hasBurst,
   formatDuration,
   INTENSITIES,
   lastFightPlan,
@@ -19,6 +22,8 @@ import {
   ROUND_SEC_OPTIONS,
   startFightSession,
   totalSec,
+  WARMUP_SEC_OPTIONS,
+  type CoachMode,
   type FightPlan,
   type Intensity,
   type Sport,
@@ -51,6 +56,7 @@ function SetupForm({ initial }: { initial: FightPlan }) {
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const set = (changes: Partial<FightPlan>) => setPlan((p) => ({ ...p, ...changes }))
+  const extras = fightPlanExtras(plan)
   const comboCount = useLiveQuery(async () => (await listCombos(initial.sport)).length, [initial.sport], 0)
 
   async function start() {
@@ -112,12 +118,46 @@ function SetupForm({ initial }: { initial: FightPlan }) {
         onChange={(v) => set({ restSec: Number(v) })}
       />
 
-      <Segmented<Intensity>
-        label="Intensity"
-        value={plan.intensity}
-        options={INTENSITIES.map((i) => ({ value: i, label: INTENSITY_LABELS[i] }))}
-        onChange={(intensity) => set({ intensity })}
-        hint={INTENSITY_HINT[plan.sport === 'wrestling' ? 'wrestling' : 'striking']}
+      <Segmented<CoachMode>
+        label="Coach"
+        value={extras.coachMode}
+        options={[
+          { value: 'combos', label: plan.sport === 'wrestling' ? 'Call drills' : 'Call combos' },
+          { value: 'timer', label: 'Timer only' },
+        ]}
+        onChange={(coachMode) => set({ coachMode })}
+        hint={
+          extras.coachMode === 'timer'
+            ? 'Bells and round calls, no combos — for bag work or shadowboxing.'
+            : undefined
+        }
+      />
+
+      {extras.coachMode === 'combos' && (
+        <Segmented<Intensity>
+          label="Intensity"
+          value={plan.intensity}
+          options={INTENSITIES.map((i) => ({ value: i, label: INTENSITY_LABELS[i] }))}
+          onChange={(intensity) => set({ intensity })}
+          hint={INTENSITY_HINT[plan.sport === 'wrestling' ? 'wrestling' : 'striking']}
+        />
+      )}
+
+      {(extras.coachMode === 'timer' || plan.intensity !== 'easy') && (
+        <Switch
+          label="Burst at the end of each round"
+          hint={`Last ${BURST_SEC} seconds: “Burst! Everything!” — no more combos, let your hands go.`}
+          checked={hasBurst(plan)}
+          onChange={(burst) => set({ burst })}
+        />
+      )}
+
+      <Segmented
+        label="Warm-up round"
+        value={String(extras.warmupSec)}
+        options={WARMUP_SEC_OPTIONS.map((s) => ({ value: String(s), label: s === 0 ? 'None' : secLabel(s) }))}
+        onChange={(v) => set({ warmupSec: Number(v) })}
+        hint={extras.warmupSec > 0 ? 'Before round 1, e.g. jump rope. Bell only, then the usual rest.' : undefined}
       />
 
       <p className={styles.total}>

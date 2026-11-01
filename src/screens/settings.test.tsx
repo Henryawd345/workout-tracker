@@ -17,7 +17,7 @@ describe('settings', () => {
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Default rest for new exercises' }), '2:00')
     await userEvent.click(screen.getByRole('switch', { name: /Start automatically/ }))
     await waitFor(async () =>
-      expect(await getSettings()).toEqual({ displayUnit: 'lb', defaultRestSec: 120, autoStartRest: false, coachVoice: null, coachRate: 1 }),
+      expect(await getSettings()).toEqual({ displayUnit: 'lb', defaultRestSec: 120, autoStartRest: false, coachVoice: null, coachRate: 1, stance: 'orthodox' }),
     )
   })
 

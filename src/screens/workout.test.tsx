@@ -116,7 +116,7 @@ describe('logging with suggestions', () => {
   })
 
   it('shows last time in lb but stores the accepted kg value unchanged', async () => {
-    await db.settings.put({ id: 'settings', displayUnit: 'lb', defaultRestSec: 90, autoStartRest: true, coachVoice: null, coachRate: 1 })
+    await db.settings.put({ id: 'settings', displayUnit: 'lb', defaultRestSec: 90, autoStartRest: true, coachVoice: null, coachRate: 1, stance: 'orthodox' })
     const routine = (await db.routines.toArray())[0]
     await startWorkout({ routineId: routine.id })
     renderApp('/workout')

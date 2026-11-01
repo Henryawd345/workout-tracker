@@ -82,7 +82,8 @@ describe('fight tab and setup', () => {
     ])
 
     await userEvent.click(within(sports).getByRole('link', { name: /Boxing/ }))
-    expect(await screen.findByRole('radio', { name: '3 min' })).toBeChecked()
+    await screen.findByRole('group', { name: 'Round length' })
+    expect(roundLength().getByRole('radio', { name: '3 min' })).toBeChecked()
     expect(roundLength().getByRole('radio', { name: '1 min' })).not.toBeChecked()
     await userEvent.click(roundLength().getByRole('radio', { name: '2 min' }))
     await userEvent.click(screen.getByRole('button', { name: 'More rounds' }))
@@ -120,13 +121,15 @@ describe('live session', () => {
     expect(alerts.roundBell).toHaveBeenCalledWith(1)
     expect(spoken).toEqual(['Round 1'])
 
-    at(READY_SEC + 4)
+    await tickAt(READY_SEC + 2)
+    await tickAt(READY_SEC + 3.5)
     await waitFor(() => expect(spoken.length).toBe(2))
     const combo = spoken[1]
-    expect(combo).toMatch(/^[1-6]( (\d|slip|roll|duck|pull))+$/) // medium boxing: 2–4 moves
+    expect(combo).toMatch(/^[1-6]( (\d|slip (left|right)|roll (left|right)|duck|pull))+$/) // medium boxing: 2–4 moves
     await waitFor(() => expect(screen.getByLabelText('Combo')).toHaveTextContent(combo))
 
-    at(READY_SEC + 51)
+    await tickAt(READY_SEC + 49.5)
+    await tickAt(READY_SEC + 51)
     await waitFor(() => expect(alerts.warningKnock).toHaveBeenCalledTimes(1))
 
     await tickAt(READY_SEC + 59)
@@ -145,7 +148,8 @@ describe('live session', () => {
     await tickAt(READY_SEC - 1)
     await tickAt(READY_SEC + 0.5)
     await phase('Round 1 of 2')
-    at(READY_SEC + 4)
+    await tickAt(READY_SEC + 2)
+    await tickAt(READY_SEC + 3.5)
     await waitFor(() => expect(spoken).toContain('double jab, step back'))
     rng.mockRestore()
   })
@@ -213,7 +217,8 @@ describe('live session', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Minimise session' }))
     await screen.findByRole('list', { name: 'Sports' })
     const before = spoken.length
-    at(READY_SEC + 4)
+    await tickAt(READY_SEC + 2)
+    await tickAt(READY_SEC + 3.5)
     await waitFor(() => expect(spoken.length).toBeGreaterThan(before)) // still calling combos
 
     // Locked through the end of round 1: no late "Rest" or bell when it wakes up in the rest.
@@ -244,5 +249,89 @@ describe('coach settings', () => {
     const { getSettings } = await import('../data/index.ts')
     await waitFor(async () => expect(await getSettings()).toMatchObject({ coachVoice: 'v-daniel', coachRate: 1.2 }))
     await updateSettings({ coachVoice: null })
+  })
+})
+
+describe('fight extras', () => {
+  it('setup: timer-only hides intensity, burst shows when it applies, warm-up adds to the total', async () => {
+    renderApp('/fight/boxing')
+    const coach = within(await screen.findByRole('group', { name: 'Coach' }))
+    expect(screen.getByRole('switch', { name: /Burst/ })).toBeChecked() // medium by default
+    await userEvent.click(screen.getByRole('radio', { name: 'Easy' }))
+    expect(screen.queryByRole('switch', { name: /Burst/ })).not.toBeInTheDocument()
+    await userEvent.click(coach.getByRole('radio', { name: 'Timer only' }))
+    expect(screen.queryByRole('group', { name: 'Intensity' })).not.toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: /Burst/ })).toBeInTheDocument()
+    const warmup = within(screen.getByRole('group', { name: 'Warm-up round' }))
+    await userEvent.click(warmup.getByRole('radio', { name: '2 min' }))
+    expect(screen.getByText(/Total 14:10/)).toBeInTheDocument() // 10 s + 2:00 + 1:00 rest + 3 × 3:00 + 2 × 1:00
+    await userEvent.click(screen.getByRole('button', { name: 'Start' }))
+    await phase('Get ready')
+    expect(await getActiveFightSession()).toMatchObject({ coachMode: 'timer', warmupSec: 120, burst: true })
+  })
+
+  it('rings a bell for the warm-up, then rests before round 1', async () => {
+    await startFightSession({ ...plan, warmupSec: 60 }, T)
+    renderApp('/fight/session')
+    await phase('Get ready')
+    await tickAt(READY_SEC - 1)
+    await tickAt(READY_SEC + 0.5)
+    expect(await phase('Warm-up')).toBeInTheDocument()
+    expect(alerts.roundBell).toHaveBeenCalledWith(1)
+    expect(spoken).toEqual(['Warm-up'])
+    await tickAt(READY_SEC + 59)
+    await tickAt(READY_SEC + 60.5)
+    expect(await phase('Rest · round 1 next')).toBeInTheDocument()
+  })
+
+  it('bursts for the last 20 seconds: no more combos', async () => {
+    await startFightSession({ ...plan, roundSec: 60 }, T)
+    renderApp('/fight/session')
+    await phase('Get ready')
+    await tickAt(READY_SEC - 1)
+    await tickAt(READY_SEC + 0.5)
+    await phase('Round 1 of 2')
+    await tickAt(READY_SEC + 39)
+    await tickAt(READY_SEC + 40.5)
+    await waitFor(() => expect(spoken.at(-1)).toBe('Burst! Everything!'))
+    expect(screen.getByLabelText('Combo')).toHaveTextContent('Burst! Everything!')
+    const count = spoken.length
+    await tickAt(READY_SEC + 41.5)
+    await tickAt(READY_SEC + 43)
+    await tickAt(READY_SEC + 44.5)
+    expect(spoken.length).toBe(count)
+  })
+
+  it('back after the phone was locked inside the burst: no late "Burst!"', async () => {
+    await startFightSession({ ...plan, roundSec: 60 }, T)
+    renderApp('/fight/session')
+    await phase('Get ready')
+    await tickAt(READY_SEC - 1)
+    await tickAt(READY_SEC + 0.5)
+    await phase('Round 1 of 2')
+    await tickAt(READY_SEC + 30)
+    await tickAt(READY_SEC + 57) // locked from 30 s to 57 s
+    await tickAt(READY_SEC + 57.5)
+    expect(spoken).not.toContain('Burst! Everything!')
+    expect(screen.getByLabelText('Combo')).toHaveTextContent('Burst! Everything!')
+  })
+
+  it('timer only: round calls but no combos', async () => {
+    await startFightSession({ ...plan, coachMode: 'timer', burst: false }, T)
+    renderApp('/fight/session')
+    await phase('Get ready')
+    await tickAt(READY_SEC - 1)
+    await tickAt(READY_SEC + 0.5)
+    await phase('Round 1 of 2')
+    for (const s of [2, 3.5, 5, 6.5, 8]) await tickAt(READY_SEC + s)
+    expect(spoken).toEqual(['Round 1'])
+    expect(screen.getByLabelText('Combo')).toHaveTextContent('Your round')
+  })
+
+  it('saves your stance', async () => {
+    renderApp('/settings')
+    await userEvent.click(await screen.findByRole('radio', { name: 'Southpaw' }))
+    const { getSettings } = await import('../data/index.ts')
+    await waitFor(async () => expect((await getSettings()).stance).toBe('southpaw'))
   })
 })

@@ -63,6 +63,7 @@ function FightRunner({ stored, onChange }: { stored: FightSession; onChange: (li
 
   const call = useFightCoach({
     session,
+    stance: settings.stance,
     state,
     now,
     custom: combos.map((c) => c.text),

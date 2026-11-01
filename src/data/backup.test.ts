@@ -233,6 +233,30 @@ describe('fight sessions and combos in backups', () => {
     expect(await listCombos('boxing')).toHaveLength(1)
   })
 
+  it('reads sessions saved before coach mode, burst and warm-up existed', async () => {
+    const base = await exportBackup()
+    const s = await startFightSession(FIGHT, T)
+    const old: Record<string, unknown> = { ...s }
+    delete old.coachMode
+    delete old.burst
+    delete old.warmupSec
+    const [read] = parseBackup(JSON.stringify({ ...base, fightSessions: [old] })).fightSessions
+    expect(read).toMatchObject({ coachMode: 'combos', burst: true, warmupSec: 0 })
+  })
+
+  it('drops a warm-up length the app does not offer', async () => {
+    const base = await exportBackup()
+    const s = await startFightSession(FIGHT, T)
+    const [read] = parseBackup(JSON.stringify({ ...base, fightSessions: [{ ...s, warmupSec: 45 }] })).fightSessions
+    expect(read.warmupSec).toBe(0)
+  })
+
+  it('keeps your stance', async () => {
+    const { updateSettings } = await import('./settings.ts')
+    await updateSettings({ stance: 'southpaw' })
+    expect(parseBackup(JSON.stringify(await exportBackup())).settings.stance).toBe('southpaw')
+  })
+
   it('rejects damaged fight data', async () => {
     const base = await exportBackup()
     const s = { ...(await startFightSession(FIGHT, T)) }

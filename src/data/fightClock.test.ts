@@ -26,6 +26,17 @@ describe('fight clock', () => {
     expect(clockState(one, clock, at(70)).phase).toBe('done')
   })
 
+  it('runs an optional warm-up, then the usual rest, before round 1', () => {
+    const clock = startClock(T)
+    const withWarmup = { ...plan, warmupSec: 120 }
+    expect(totalSec(withWarmup)).toBe(totalSec(plan) + 120 + 60)
+    expect(clockState(withWarmup, clock, at(10))).toMatchObject({ phase: 'warmup', round: 0, remainingSec: 120 })
+    expect(clockState(withWarmup, clock, at(130))).toMatchObject({ phase: 'rest', round: 0, remainingSec: 60 })
+    expect(clockState(withWarmup, clock, at(190))).toMatchObject({ phase: 'round', round: 1, completedRounds: 0 })
+    // No rest after the warm-up when rest is 0.
+    expect(clockState({ ...withWarmup, restSec: 0 }, clock, at(130))).toMatchObject({ phase: 'round', round: 1 })
+  })
+
   it('pauses and resumes without losing time', () => {
     let clock = startClock(T)
     clock = pauseClock(clock, at(100))

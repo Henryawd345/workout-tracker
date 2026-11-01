@@ -25,7 +25,7 @@ import styles from './CombosScreen.module.css'
 
 const HINTS: Record<'striking' | 'wrestling', { hint: string; example: string }> = {
   striking: {
-    hint: 'Numbers for punches (1 jab, 2 cross, 3 lead hook, 4 rear hook, 5 lead uppercut, 6 rear uppercut), words for the rest: slip, roll, rear kick, teep…',
+    hint: 'Numbers for punches (1 jab, 2 cross, 3 lead hook, 4 rear hook, 5 lead uppercut, 6 rear uppercut), words for the rest: slip left, roll right, left kick, right knee, teep…',
     example: 'e.g. 1 2 slip 2 3',
   },
   wrestling: { hint: 'Short calls, with commas between moves.', example: 'e.g. shot, sprawl, re-shot' },

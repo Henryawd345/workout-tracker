@@ -93,7 +93,7 @@ Bottom tab bar (always visible except during an active workout or fight session)
 
 ### Fight
 - **Sports:** Boxing · Muay Thai · Kickboxing · Wrestling (cards). A session in progress shows a *Resume* button on top.
-- **Setup** (per sport, pre-filled with your last choices): round length 1/2/3/5 min · rounds 1–12 (− / +) · rest 30 s/1/2 min · intensity Easy/Medium/Hard · total time · **Start** (kept at the bottom of the screen while it scrolls, nothing below it). *Combos* in the header.
+- **Setup** (per sport, pre-filled with your last choices): round length 1/2/3/5 min · rounds 1–12 (− / +) · rest 30 s/1/2 min · coach *Call combos / Timer only* (timer only: bells and round calls, no combos — for bag work or shadowboxing) · intensity Easy/Medium/Hard (combos only) · *Burst at the end of each round* switch (shown on Medium/Hard and timer-only; on by default) · warm-up round None/1/2/3 min · total time · **Start** (kept at the bottom of the screen while it scrolls, nothing below it). *Combos* in the header.
 - **Session** (full screen): phase (Get ready / Round 2 of 3 / Rest), big countdown and progress bar, **the current combo in big text**, Pause/Resume, End (saves full rounds, or discards if none), Minimise (the session and the coach keep running; a "session in progress" bar stays on every tab). After a reload iOS needs one tap to turn sound back on, so the screen offers it. The coach (phone text-to-speech) says "Round 2", the combos, "Rest" and "Time"; a bell rings at the start (once) and end (three times) of each round and two knocks warn at 10 s. The screen is kept awake where the phone allows it.
 - **Summary:** rounds done / planned, round length, time, note → *Done*.
 - **My combos** (*Combos* in the setup screen's header, per sport): type a combo ("1 2 slip 2 3", "shot, sprawl, re-shot") → *Add combo*; each can be heard (speaker) or deleted (with Undo). About 1 call in 3 is one of yours.
@@ -101,7 +101,7 @@ Bottom tab bar (always visible except during an active workout or fight session)
 ### Settings
 - Units: **kg / lb** (display unit; stored values are never altered).
 - Default rest time; auto-start rest timer on/off.
-- Fight coach: voice (English voices on the phone), speed (slow/normal/fast), *Test voice*.
+- Fight coach: stance (orthodox / southpaw — the coach says left/right to match), voice (English voices on the phone), speed (slow/normal/fast), *Test voice*.
 - **Export** data: JSON (full backup) and CSV (one row per set, for spreadsheets).
 - **Import** a JSON backup.
 - **Delete all data** (type DELETE to confirm).
@@ -201,6 +201,7 @@ interface Settings {               // single record, id = 'settings'
   autoStartRest: boolean;          // default true
   coachVoice: string | null;       // fight coach voice; null = phone default
   coachRate: number;               // fight coach speed, default 1
+  stance: 'orthodox' | 'southpaw'; // default orthodox
 }
 
 // —— Fight trainer (database version 2) ——
@@ -216,6 +217,9 @@ interface FightSession {
   id: ID;
   sport: Sport; intensity: Intensity;
   roundSec: number; restSec: number; rounds: number;   // the plan
+  coachMode?: 'combos' | 'timer';  // default combos   } added in phase 14; older sessions
+  burst?: boolean;                 // default true     } don't have them, so code reads them
+  warmupSec?: number;              // 0/60/120/180     } through fightPlanExtras()
   status: 'active' | 'completed';
   startedAt: string; endedAt: string | null;
   clock: FightClock;
@@ -246,8 +250,8 @@ version 2 adds `fightSessions: id, status, startedAt` · `combos: id, sport`
 - **Rest timer** is based on the `endsAt` timestamp, not on counting ticks, so it stays correct after the phone locks or the app is closed. It starts when a set is ticked (if auto-start is on and the exercise has a rest time); un-ticking a set leaves a running rest alone. It beeps once when it runs out while the app is open (not for a rest that ended while closed, nor when you shorten it to zero yourself).
 - **Deleting a custom exercise** that appears in history archives it instead.
 - **Volume** = Σ(weight × reps) over completed sets, converted to the display unit.
-- **Fight clock:** a 10 s get-ready, then round, rest, round … last round. The phase is always worked out from the stored `FightClock`, so it's right after a reload or a locked screen. A session counts only **full rounds**; with none it can only be discarded. Its time is how long it ran (pauses not included), so it can include part of an unfinished round. If the last round ended while the app was closed, the session ends at the last bell.
-- **Combos:** punches are numbers (1 jab, 2 cross, 3 lead hook, 4 rear hook, 5 lead uppercut, 6 rear uppercut); kicks, knees, elbows and defence are words. Easy = 1–2 punches; medium = 2–4 with some defence (and kicks at the end, for kickboxing/Muay Thai); hard = 3–6 with defence and kicks/knees/elbows. Combos must be natural to throw: they start with a punch (mostly 1 or 2); hands alternate — same-hand punches only as 1 1, 1 3 or 5 3, never three strikes in a row from one side (so no 6 6, 3 3 or 5 1 5); a kick, knee or elbow comes off the other side from the strike before it; after defence you counter with a punch; never two defence moves in a row; never the same combo twice running. About half the calls are well-known classics (1 2, 1 1 2, 1 2 3 2, 1 6 3 2, 1 2 3 low kick…) that suit the intensity; the rest are generated with these rules. Wrestling calls drills (shot, sprawl …; chains like "sprawl, re-shot" when hard). The gap after a call grows with its length and shrinks with intensity. With your own combos saved, about 1 call in 3 is one of them.
+- **Fight clock:** a 10 s get-ready, then (optional) a warm-up round and the usual rest, then round, rest, round … last round. The phase is always worked out from the stored `FightClock`, so it's right after a reload or a locked screen. A session counts only **full rounds**; with none it can only be discarded. Its time is how long it ran (pauses not included), so it can include part of an unfinished round. If the last round ended while the app was closed, the session ends at the last bell.
+- **Combos:** punches are numbers (1 jab, 2 cross, 3 lead hook, 4 rear hook, 5 lead uppercut, 6 rear uppercut); kicks, knees, elbows and defence are words. Easy = 1–2 punches; medium = 2–4 with some defence (and kicks at the end, for kickboxing/Muay Thai); hard = 3–6 with defence and kicks/knees/elbows. Sides are stored as lead/rear and said as left/right for your stance (orthodox: lead = left). Defence is directional (slip left/right, roll left/right, duck, pull), and after a slip or roll you counter from the side you moved to. **Burst:** with it on (and not on Easy combos), the last 20 s of each round are "Burst! Everything!" and no more combos. Combos must be natural to throw: they start with a punch (mostly 1 or 2); hands alternate — same-hand punches only as 1 1, 1 3 or 5 3, never three strikes in a row from one side (so no 6 6, 3 3 or 5 1 5); a kick, knee or elbow comes off the other side from the strike before it; after defence you counter with a punch; never two defence moves in a row; never the same combo twice running. About half the calls are well-known classics (1 2, 1 1 2, 1 2 3 2, 1 6 3 2, 1 2 3 low kick…) that suit the intensity; the rest are generated with these rules. Wrestling calls drills (shot, sprawl …; chains like "sprawl, re-shot" when hard). The gap after a call grows with its length and shrinks with intensity. With your own combos saved, about 1 call in 3 is one of them.
 
 ---
 
@@ -271,6 +275,8 @@ The order builds the **thinnest complete flow first** (phases 0–5), then deepe
 - [x] **11. Fight data** — sessions, combos, combo generator, fight clock maths; backup version 2 (still reads version 1); delete-all includes the new tables. No UI yet.
 - [x] **12. Fight tab + live session** — Fight tab (5 tabs), sport cards, setup (round length 1/2/3/5 min, rounds 1–12, rest 30 s/1/2 min, intensity), full-screen session with big countdown and the combo in big text, voice coach (phone text-to-speech), bell and 10 s warning, keep screen awake, resume after reload, in-progress bar, summary; coach voice and speed in Settings.
 - [x] **13. Own combos + History** — combo list per sport (add, test-speak, delete with undo); fight sessions in History list, calendar and a detail screen (note, delete); counted in Today's "This week". Not in Progress charts yet.
+
+- [x] **14. Fight extras** — stance setting (left/right calls), directional defence with matching counters, end-of-round burst, timer-only rounds, warm-up round.
 
 ### How agents are used here
 - **Main agent:** plans and builds each phase in order. Phases 0–4 all touch the shared data types, so they run one at a time.

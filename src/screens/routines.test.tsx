@@ -122,7 +122,7 @@ describe('routine editor', () => {
   })
 
   it('shows and edits weights in the display unit without changing other sets', async () => {
-    await db.settings.put({ id: 'settings', displayUnit: 'lb', defaultRestSec: 90, autoStartRest: true, coachVoice: null, coachRate: 1 })
+    await db.settings.put({ id: 'settings', displayUnit: 'lb', defaultRestSec: 90, autoStartRest: true, coachVoice: null, coachRate: 1, stance: 'orthodox' })
     const r = await createRoutine('A', [newRoutineExercise('ex-deadlift', 180, 2)])
     await db.routines.update(r.id, {
       exercises: [

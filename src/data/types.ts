@@ -128,7 +128,11 @@ export interface Settings {
   coachVoice: string | null
   /** Fight coach speaking speed: 1 = normal. */
   coachRate: number
+  /** Which foot is forward; the coach says left/right to match. */
+  stance: Stance
 }
+
+export type Stance = 'orthodox' | 'southpaw'
 
 export const COACH_RATES = [0.85, 1, 1.2] as const
 
@@ -138,6 +142,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoStartRest: true,
   coachVoice: null,
   coachRate: 1,
+  stance: 'orthodox',
 }
 
 // —— Fight trainer ——
@@ -159,12 +164,21 @@ export interface FightClock {
   elapsedBeforeSec: number
 }
 
+/** 'combos': the coach calls combos (drills for wrestling). 'timer': bells and round calls only. */
+export type CoachMode = 'combos' | 'timer'
+
 export interface FightPlan {
   sport: Sport
   intensity: Intensity
   roundSec: number
   restSec: number
   rounds: number
+  /** Added later, so older sessions may not have them; see fightPlanExtras(). Default 'combos'. */
+  coachMode?: CoachMode
+  /** "Burst! Everything!" for the last 20 s of each round (not on Easy combos). Default true. */
+  burst?: boolean
+  /** Warm-up round before round 1, then the usual rest. 0 = none (default). */
+  warmupSec?: number
 }
 
 export interface FightSession extends FightPlan {

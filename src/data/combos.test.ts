@@ -7,6 +7,8 @@ import {
   handOf,
   isDefense,
   isNaturalCombo,
+  moveName,
+  parseCombo,
   nextCall,
   sportMoves,
   type Call,
@@ -38,8 +40,8 @@ describe('combo generator', () => {
       }
     }
     expect(sportMoves('boxing')).not.toContain('rear kick')
-    expect(sportMoves('kickboxing')).not.toContain('teep')
-    expect(sportMoves('muay_thai')).toEqual(expect.arrayContaining(['teep', 'lead knee', 'rear elbow', 'check']))
+    expect(sportMoves('kickboxing')).not.toContain('lead teep')
+    expect(sportMoves('muay_thai')).toEqual(expect.arrayContaining(['lead teep', 'lead knee', 'rear elbow', 'check', 'slip lead', 'roll rear']))
   })
 
   it('makes longer combos at higher intensity', () => {
@@ -113,10 +115,16 @@ describe('combo generator', () => {
     const STRIKING = ['boxing', 'kickboxing', 'muay_thai'] as const
 
     it('judges combos the way a coach would', () => {
-      const ok = (text: string) => isNaturalCombo('muay_thai', text.split(/ (?!kick|knee|elbow)/))
-      for (const good of ['1 2', '1 1 2', '1 3 2', '5 3 2', '1 2 3 2', '1 2 slip 2', '1 2 3 rear kick', '2 lead kick', '2 teep', '1 2 roll'])
+      const ok = (text: string) => isNaturalCombo('muay_thai', parseCombo('muay_thai', text))
+      for (const good of [
+        '1 2', '1 1 2', '1 3 2', '5 3 2', '1 2 3 2', '1 2 slip rear 2', '1 slip lead 3', '1 2 3 rear kick',
+        '2 lead kick', '2 lead teep', '1 2 roll lead', '1 2 duck 2', '1 2 duck 3',
+      ])
         expect(ok(good), good).toBe(true)
-      for (const bad of ['6 6', '2 2', '4 4', '3 3', '5 5', '5 1 5', '1 1 3', '2 6', '1 3 5', 'slip 2', '1 slip roll', '2 rear kick', '1 lead kick', '1 slip rear kick'])
+      for (const bad of [
+        '6 6', '2 2', '4 4', '3 3', '5 5', '5 1 5', '1 1 3', '2 6', '1 3 5', 'slip lead 2', '1 slip lead roll rear',
+        '2 rear kick', '1 lead kick', '1 slip rear rear kick', '1 2 slip rear 3', '1 slip lead 2',
+      ])
         expect(ok(bad), bad).toBe(false)
     })
 
@@ -145,6 +153,27 @@ describe('combo generator', () => {
       }
     })
 
+    it('counters from the side you slipped or rolled to', () => {
+      for (const { call } of sample('boxing', 'hard', 1500, 11)) {
+        call.moves.forEach((m, i) => {
+          const side = /^(slip|roll) (lead|rear)$/.exec(m)?.[2]
+          if (side && i + 1 < call.moves.length) expect(handOf(call.moves[i + 1]), call.text).toBe(side)
+        })
+      }
+    })
+
+    it('says sides as left and right for your stance', () => {
+      expect(moveName('lead kick')).toBe('left kick')
+      expect(moveName('slip rear')).toBe('slip right')
+      expect(moveName('lead kick', 'southpaw')).toBe('right kick')
+      expect(moveName('rear low kick', 'southpaw')).toBe('left low kick')
+      expect(moveName('3', 'southpaw')).toBe('3')
+      const rng = seeded(4)
+      const texts = Array.from({ length: 300 }, () => nextCall('muay_thai', 'hard', { rng, stance: 'southpaw' }).text)
+      expect(texts.some((t) => /\b(left|right) (kick|knee|elbow|teep)\b/.test(t))).toBe(true)
+      expect(texts.some((t) => /\b(lead|rear)\b/.test(t))).toBe(false)
+    })
+
     it('kicks and knees come off the other side from the strike before', () => {
       for (const { call } of sample('muay_thai', 'hard', 1500, 5)) {
         call.moves.forEach((m, i) => {
@@ -169,6 +198,11 @@ describe('combo generator', () => {
   it('counts moves in a typed combo', () => {
     expect(countMoves('1 2 3 slip 2')).toBe(5)
     expect(countMoves('1 2 lead kick')).toBe(3)
+    expect(countMoves('1 2 slip left 2 right kick')).toBe(5)
+    expect(countMoves('Roll Right 3')).toBe(2)
+    expect(countMoves('1 2 slip lead 3')).toBe(4)
+    expect(countMoves('snap down, go behind')).toBe(2)
+    expect(countMoves('shot, sprawl, re-shot')).toBe(3)
     expect(countMoves('double leg, level change')).toBe(2)
     expect(countMoves('   ')).toBe(1)
   })

@@ -1,22 +1,50 @@
 import { db } from './db.ts'
 import { clockElapsedSec, clockState, pauseClock, startClock, totalSec } from './fightClock.ts'
 import { newId, nowIso } from './ids.ts'
-import { INTENSITIES, SPORTS, type CustomCombo, type FightPlan, type FightSession, type ID, type Sport } from './types.ts'
+import {
+  INTENSITIES,
+  SPORTS,
+  type CoachMode,
+  type CustomCombo,
+  type FightPlan,
+  type FightSession,
+  type ID,
+  type Sport,
+} from './types.ts'
 
 // —— Plans ——
 
 export const ROUND_SEC_OPTIONS = [60, 120, 180, 300]
 export const REST_SEC_OPTIONS = [30, 60, 120]
+export const WARMUP_SEC_OPTIONS = [0, 60, 120, 180]
 export const MAX_ROUNDS = 12
+/** The burst is the last this many seconds of each round. */
+export const BURST_SEC = 20
 
+/** The newer plan options, with their defaults for sessions saved before they existed. */
+export function fightPlanExtras(plan: FightPlan): { coachMode: CoachMode; burst: boolean; warmupSec: number } {
+  return { coachMode: plan.coachMode ?? 'combos', burst: plan.burst ?? true, warmupSec: plan.warmupSec ?? 0 }
+}
+
+/** Whether this plan has the end-of-round burst: on, and not on Easy combos (timer-only rounds do). */
+export function hasBurst(plan: FightPlan): boolean {
+  const { coachMode, burst } = fightPlanExtras(plan)
+  return burst && (coachMode === 'timer' || plan.intensity !== 'easy')
+}
+
+const base = { intensity: 'medium', restSec: 60, rounds: 3, coachMode: 'combos', burst: true, warmupSec: 0 } as const
 export const DEFAULT_FIGHT_PLANS: Record<Sport, FightPlan> = {
-  boxing: { sport: 'boxing', intensity: 'medium', roundSec: 180, restSec: 60, rounds: 3 },
-  muay_thai: { sport: 'muay_thai', intensity: 'medium', roundSec: 180, restSec: 60, rounds: 3 },
-  kickboxing: { sport: 'kickboxing', intensity: 'medium', roundSec: 180, restSec: 60, rounds: 3 },
-  wrestling: { sport: 'wrestling', intensity: 'medium', roundSec: 120, restSec: 60, rounds: 3 },
+  boxing: { ...base, sport: 'boxing', roundSec: 180 },
+  muay_thai: { ...base, sport: 'muay_thai', roundSec: 180 },
+  kickboxing: { ...base, sport: 'kickboxing', roundSec: 180 },
+  wrestling: { ...base, sport: 'wrestling', roundSec: 120 },
 }
 
 function checkPlan(plan: FightPlan): void {
+  const { coachMode, burst, warmupSec } = fightPlanExtras(plan)
+  if (!['combos', 'timer'].includes(coachMode) || typeof burst !== 'boolean' || !WARMUP_SEC_OPTIONS.includes(warmupSec)) {
+    throw new Error('That session plan isn’t valid')
+  }
   const ok =
     SPORTS.includes(plan.sport) &&
     INTENSITIES.includes(plan.intensity) &&
@@ -38,7 +66,7 @@ export async function lastFightPlan(sport: Sport): Promise<FightPlan> {
   const last = sessions.find((s) => s.sport === sport)
   if (!last) return DEFAULT_FIGHT_PLANS[sport]
   const { intensity, roundSec, restSec, rounds } = last
-  return { sport, intensity, roundSec, restSec, rounds }
+  return { sport, intensity, roundSec, restSec, rounds, ...fightPlanExtras(last) }
 }
 
 // —— Sessions ——
@@ -88,6 +116,7 @@ export async function startFightSession(plan: FightPlan, now: number = Date.now(
       roundSec: plan.roundSec,
       restSec: plan.restSec,
       rounds: plan.rounds,
+      ...fightPlanExtras(plan),
       status: 'active',
       startedAt: iso,
       endedAt: null,

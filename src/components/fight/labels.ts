@@ -1,4 +1,4 @@
-import { SPORTS, type FightPlan, type Intensity, type Sport } from '../../data/index.ts'
+import { fightPlanExtras, SPORTS, type FightPlan, type Intensity, type Sport } from '../../data/index.ts'
 
 export const SPORT_LABELS: Record<Sport, string> = {
   boxing: 'Boxing',
@@ -31,7 +31,12 @@ export function secLabel(sec: number): string {
   return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`
 }
 
+/** "Hard", or "Timer only" when the coach doesn't call combos. */
+export function styleLabel(plan: FightPlan): string {
+  return fightPlanExtras(plan).coachMode === 'timer' ? 'Timer only' : INTENSITY_LABELS[plan.intensity]
+}
+
 /** "3 × 3 min · Hard" */
-export function planSummary(plan: Pick<FightPlan, 'rounds' | 'roundSec' | 'intensity'>): string {
-  return `${plan.rounds} × ${secLabel(plan.roundSec)} · ${INTENSITY_LABELS[plan.intensity]}`
+export function planSummary(plan: FightPlan): string {
+  return `${plan.rounds} × ${secLabel(plan.roundSec)} · ${styleLabel(plan)}`
 }

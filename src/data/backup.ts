@@ -1,4 +1,5 @@
 import { db, ensureSeedExercises } from './db.ts'
+import { WARMUP_SEC_OPTIONS } from './fight.ts'
 import { nowIso } from './ids.ts'
 import { getSettings } from './settings.ts'
 import {
@@ -277,6 +278,9 @@ function readFightSession(f: unknown, now: string): FightSession {
     roundSec: x.roundSec as number,
     restSec: x.restSec as number,
     rounds: x.rounds as number,
+    coachMode: x.coachMode === 'timer' ? 'timer' : 'combos',
+    burst: typeof x.burst === 'boolean' ? x.burst : true,
+    warmupSec: WARMUP_SEC_OPTIONS.includes(x.warmupSec as number) ? (x.warmupSec as number) : 0,
     status: x.status as FightSession['status'],
     startedAt: x.startedAt as string,
     endedAt: completed ? (x.endedAt as string) : null,
@@ -363,6 +367,7 @@ export function parseBackup(text: string, now: string = nowIso()): Backup {
               Math.abs(r - (settings.coachRate as number)) < Math.abs(best - (settings.coachRate as number)) ? r : best,
             )
           : DEFAULT_SETTINGS.coachRate,
+      stance: settings.stance === 'southpaw' ? 'southpaw' : 'orthodox',
     },
     exercises,
     routines,

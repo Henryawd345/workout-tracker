@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Button } from '../components/Button.tsx'
-import { INTENSITY_LABELS, secLabel, SPORT_LABELS } from '../components/fight/labels.ts'
+import { secLabel, SPORT_LABELS, styleLabel } from '../components/fight/labels.ts'
 import { TextAreaField } from '../components/Fields.tsx'
 import { EmptyState, Screen } from '../components/Screen.tsx'
 import {
@@ -39,7 +39,7 @@ function Summary({ session }: { session: FightSession }) {
   return (
     <Screen title="Session complete">
       <p className={styles.name}>
-        {SPORT_LABELS[session.sport]} · {INTENSITY_LABELS[session.intensity]}
+        {SPORT_LABELS[session.sport]} · {styleLabel(session)}
       </p>
 
       <dl className={styles.stats}>

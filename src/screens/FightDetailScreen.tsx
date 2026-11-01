@@ -4,12 +4,13 @@ import { useNavigate, useParams } from 'react-router'
 import { BackButton } from '../components/BackButton.tsx'
 import { Button } from '../components/Button.tsx'
 import { ConfirmDialog } from '../components/ConfirmDialog.tsx'
-import { INTENSITY_LABELS, secLabel, SPORT_LABELS } from '../components/fight/labels.ts'
+import { secLabel, SPORT_LABELS, styleLabel } from '../components/fight/labels.ts'
 import { TextAreaField } from '../components/Fields.tsx'
 import { formatDate, formatTime } from '../components/format.ts'
 import { EmptyState, Screen } from '../components/Screen.tsx'
 import {
   deleteFightSession,
+  fightPlanExtras,
   fightSessionDurationSec,
   formatDuration,
   getFightSession,
@@ -73,7 +74,8 @@ function Detail({ session }: { session: FightSession }) {
         </div>
       </dl>
       <p>
-        {INTENSITY_LABELS[session.intensity]} · {secLabel(session.restSec)} rest between rounds
+        {styleLabel(session)} · {secLabel(session.restSec)} rest between rounds
+        {fightPlanExtras(session).warmupSec > 0 && ` · ${secLabel(fightPlanExtras(session).warmupSec)} warm-up`}
       </p>
 
       <TextAreaField

@@ -1,14 +1,15 @@
-import type { Intensity, Sport } from './types.ts'
+import type { Intensity, Sport, Stance } from './types.ts'
 
 // Random combos for the fight coach. Pure: pass `rng` (0 ≤ n < 1) to make results repeatable.
 
 export type Rng = () => number
 
 // Punches are called as numbers: 1 jab, 2 cross, 3 lead hook, 4 rear hook, 5 lead uppercut, 6 rear uppercut.
+// Everything else is stored by side (lead/rear) and said as left/right for your stance — see moveName().
 const PUNCHES = ['1', '2', '3', '4', '5', '6']
-const BOXING_DEFENSE = ['slip', 'roll', 'duck', 'pull']
-const KICKS = ['lead kick', 'rear kick', 'low kick', 'front kick']
-const THAI_STRIKES = ['teep', 'lead kick', 'rear kick', 'low kick', 'lead knee', 'rear knee', 'lead elbow', 'rear elbow']
+const BOXING_DEFENSE = ['slip lead', 'slip rear', 'roll lead', 'roll rear', 'duck', 'pull']
+const KICKS = ['lead kick', 'rear kick', 'rear low kick', 'lead front kick']
+const THAI_STRIKES = ['lead teep', 'lead kick', 'rear kick', 'rear low kick', 'lead knee', 'rear knee', 'lead elbow', 'rear elbow']
 
 interface StrikingKit {
   defense: string[]
@@ -85,9 +86,39 @@ export type Hand = 'lead' | 'rear'
 export function handOf(move: string): Hand | null {
   if (/^[135]$/.test(move)) return 'lead'
   if (/^[246]$/.test(move)) return 'rear'
-  if (move.startsWith('lead ') || move === 'teep' || move === 'front kick') return 'lead'
-  if (move.startsWith('rear ') || move === 'low kick') return 'rear'
+  if (move.startsWith('lead ')) return 'lead'
+  if (move.startsWith('rear ')) return 'rear'
   return null
+}
+
+/** The side a slip or roll moves you to (you counter from that side); null for other moves. */
+export function defenceSide(move: string): Hand | null {
+  const m = /^(slip|roll) (lead|rear)$/.exec(move)
+  return m ? (m[2] as Hand) : null
+}
+
+/** "lead kick" → "left kick" (orthodox) or "right kick" (southpaw). Numbers stay numbers. */
+export function moveName(move: string, stance: Stance = 'orthodox'): string {
+  const lead = stance === 'southpaw' ? 'right' : 'left'
+  const rear = stance === 'southpaw' ? 'left' : 'right'
+  return move
+    .split(' ')
+    .map((w) => (w === 'lead' ? lead : w === 'rear' ? rear : w))
+    .join(' ')
+}
+
+/** "1 2 slip rear 2" → ["1", "2", "slip rear", "2"], matching the longest known move at each step. */
+export function parseCombo(sport: Sport, text: string): string[] {
+  const vocab = sportMoves(sport)
+  const words = text.split(' ').filter(Boolean)
+  const moves: string[] = []
+  for (let i = 0; i < words.length; ) {
+    let n = Math.min(3, words.length - i)
+    while (n > 1 && !vocab.includes(words.slice(i, i + n).join(' '))) n--
+    moves.push(words.slice(i, i + n).join(' '))
+    i += n
+  }
+  return moves
 }
 
 const isPunch = (move: string) => /^[1-6]$/.test(move)
@@ -101,7 +132,8 @@ const SAME_HAND_OK = new Set(['1 1', '1 3', '5 3'])
  * - hands mostly alternate: two punches from the same hand only as 1 1, 1 3 or 5 3, and
  *   never three strikes in a row from the same side;
  * - a kick, knee or elbow comes off the other side from the strike before it, and not
- *   straight after defence (after a slip or roll you counter with a punch).
+ *   straight after defence (after a slip or roll you counter with a punch — from the side
+ *   you slipped or rolled to).
  * The rules only look at neighbours, so a combo is natural if each of its starts is.
  */
 export function isNaturalCombo(sport: Sport, moves: string[]): boolean {
@@ -121,6 +153,8 @@ export function isNaturalCombo(sport: Sport, moves: string[]): boolean {
     }
     if (prevHand === null) {
       if (!isPunch(move)) return false // counter after defence with a punch
+      const side = defenceSide(prev)
+      if (side !== null && side !== hand) return false // …from the side you moved to
       run = 1
       continue
     }
@@ -140,25 +174,18 @@ export function isNaturalCombo(sport: Sport, moves: string[]): boolean {
 const BOXING_CLASSICS = [
   '1', '2', '1 1', '1 2',
   '1 1 2', '1 2 3', '2 3 2', '1 2 1', '1 6 3', '3 2 3',
-  '1 2 3 2', '1 6 3 2', '1 2 5 2', '5 2 3 2', '1 1 2 3', '1 2 slip 2', '1 2 roll 2', '1 2 3 roll',
-  '1 2 3 6 3 2', '1 2 slip 2 3 2', '1 6 3 2 roll 2', '1 2 5 2 3 2',
+  '1 2 3 2', '1 6 3 2', '1 2 5 2', '5 2 3 2', '1 1 2 3', '1 2 slip rear 2', '1 2 roll rear 2', '1 2 3 roll lead',
+  '1 slip lead 3 2', '1 2 3 6 3 2', '1 2 slip rear 2 3 2', '1 6 3 2 roll lead 3', '1 2 5 2 3 2',
 ]
-const KICK_CLASSICS = ['1 2 3 low kick', '1 2 lead kick', '1 rear kick', '2 3 rear kick', '1 2 3 2 lead kick', '1 2 slip 2 lead kick']
-const THAI_CLASSICS = ['1 2 3 rear knee', '2 teep', '1 2 lead knee', '1 rear elbow', '2 lead elbow', '1 2 3 rear elbow']
+const KICK_CLASSICS = [
+  '1 2 3 rear low kick', '1 2 lead kick', '1 rear kick', '2 3 rear kick', '1 2 3 2 lead kick', '1 2 slip rear 2 lead kick',
+]
+const THAI_CLASSICS = ['1 2 3 rear knee', '2 lead teep', '1 2 lead knee', '1 rear elbow', '2 lead elbow', '1 2 3 rear elbow']
 
 const CLASSICS: Record<Exclude<Sport, 'wrestling'>, string[][]> = {
-  boxing: BOXING_CLASSICS.map((c) => c.split(' ')),
-  kickboxing: [...BOXING_CLASSICS, ...KICK_CLASSICS].map(splitMoves),
-  muay_thai: [...BOXING_CLASSICS, ...KICK_CLASSICS, ...THAI_CLASSICS].map(splitMoves),
-}
-
-/** "1 2 lead kick" → ["1", "2", "lead kick"] */
-function splitMoves(text: string): string[] {
-  return text.split(' ').reduce<string[]>((moves, word) => {
-    if (['kick', 'knee', 'elbow'].includes(word)) moves[moves.length - 1] += ` ${word}`
-    else moves.push(word)
-    return moves
-  }, [])
+  boxing: BOXING_CLASSICS.map((c) => parseCombo('boxing', c)),
+  kickboxing: [...BOXING_CLASSICS, ...KICK_CLASSICS].map((c) => parseCombo('kickboxing', c)),
+  muay_thai: [...BOXING_CLASSICS, ...KICK_CLASSICS, ...THAI_CLASSICS].map((c) => parseCombo('muay_thai', c)),
 }
 
 /** The classics that suit this intensity: right length; easy is punches only; medium kicks only at the end. */
@@ -227,12 +254,28 @@ function gapFor(intensity: Intensity, moveCount: number): number {
   return Math.round((level.baseGapSec + level.perMoveSec * moveCount) * 10) / 10
 }
 
-const JOINERS = new Set(['lead', 'rear', 'low', 'front', 'level', 'double', 'single', 'down', 'snap', 'hand', 'stand', 'go'])
+/** Words that belong to the next word ("left kick", "double leg"). */
+const JOINERS = new Set([
+  'lead', 'rear', 'left', 'right', 'low', 'front',
+  'level', 'double', 'single', 'down', 'snap', 'hand', 'stand', 'go',
+])
 
-/** Rough move count of a typed combo, for its gap: "1 2 lead kick" → 3. */
+const SIDES = new Set(['left', 'right', 'lead', 'rear'])
+
+/**
+ * Rough move count of a typed combo, for its gap: "1 2 left kick" → 3, "1 slip left 2" → 3,
+ * "snap down, go behind" → 2 (commas always separate moves).
+ */
 export function countMoves(text: string): number {
-  const words = text.split(/[\s,]+/).filter(Boolean)
-  return Math.max(1, words.filter((w, i) => !(i < words.length - 1 && JOINERS.has(w.toLowerCase()))).length)
+  const chunks = text.toLowerCase().split(',').map((c) => c.split(/\s+/).filter(Boolean)).filter((c) => c.length > 0)
+  const total = chunks.reduce((sum, words) => {
+    const counted = words.filter((w, i) => {
+      if (SIDES.has(w) && (words[i - 1] === 'slip' || words[i - 1] === 'roll')) return false
+      return !(i < words.length - 1 && JOINERS.has(w) && !/^[1-6]$/.test(words[i + 1]))
+    })
+    return sum + Math.max(1, counted.length)
+  }, 0)
+  return Math.max(1, total)
 }
 
 /** Share of calls taken from the user's own combos, when there are any. */
@@ -242,9 +285,9 @@ export const CUSTOM_SHARE = 1 / 3
 export function nextCall(
   sport: Sport,
   intensity: Intensity,
-  options: { custom?: string[]; previous?: string | null; rng?: Rng } = {},
+  options: { custom?: string[]; previous?: string | null; rng?: Rng; stance?: Stance } = {},
 ): Call {
-  const { custom = [], previous = null, rng = Math.random } = options
+  const { custom = [], previous = null, rng = Math.random, stance = 'orthodox' } = options
   let call: Call | null = null
   for (let tries = 0; tries < 10 && (call === null || call.text === previous); tries++) {
     if (custom.length > 0 && rng() < CUSTOM_SHARE) {
@@ -253,7 +296,8 @@ export function nextCall(
     } else {
       const moves = sport === 'wrestling' ? wrestlingCalls(intensity, rng) : strikingCombo(sport, intensity, rng)
       const count = moves.reduce((n, m) => n + m.split(',').length, 0)
-      call = { text: moves.join(sport === 'wrestling' ? ', ' : ' '), moves, gapSec: gapFor(intensity, count), custom: false }
+      const text = sport === 'wrestling' ? moves.join(', ') : moves.map((m) => moveName(m, stance)).join(' ')
+      call = { text, moves, gapSec: gapFor(intensity, count), custom: false }
     }
   }
   return call!

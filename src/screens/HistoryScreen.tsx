@@ -3,7 +3,7 @@ import { Fragment } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Segmented } from '../components/Fields.tsx'
 import { formatDate, formatTime, plural } from '../components/format.ts'
-import { INTENSITY_LABELS, secLabel, SPORT_LABELS } from '../components/fight/labels.ts'
+import { secLabel, SPORT_LABELS, styleLabel } from '../components/fight/labels.ts'
 import { HistoryCalendar } from '../components/history/HistoryCalendar.tsx'
 import { ChevronRightIcon } from '../components/icons.tsx'
 import { EmptyState, Screen } from '../components/Screen.tsx'
@@ -114,7 +114,7 @@ function FightRow({ s }: { s: FightSession }) {
             `${formatDate(s.startedAt)}, ${formatTime(s.startedAt)}`,
             formatDuration(fightSessionDurationSec(s)),
             `${s.completedRounds < s.rounds ? `${s.completedRounds} of ` : ''}${s.rounds} × ${secLabel(s.roundSec)}`,
-            INTENSITY_LABELS[s.intensity],
+            styleLabel(s),
           ]}
         />
       </span>

@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { seeded } from '../test/factories.ts'
-import { countMoves, CUSTOM_SHARE, isDefense, nextCall, sportMoves, type Call } from './combos.ts'
+import {
+  classicCombos,
+  countMoves,
+  CUSTOM_SHARE,
+  handOf,
+  isDefense,
+  isNaturalCombo,
+  nextCall,
+  sportMoves,
+  type Call,
+} from './combos.ts'
 import { INTENSITIES, SPORTS, type Intensity, type Sport } from './types.ts'
 
 function sample(sport: Sport, intensity: Intensity, n = 400, seed = 1): { call: Call; previous: string | null }[] {
@@ -97,6 +107,63 @@ describe('combo generator', () => {
 
   it('still returns a call with a stuck random source', () => {
     expect(nextCall('wrestling', 'hard', { rng: () => 0 }).moves.length).toBeGreaterThan(0)
+  })
+
+  describe('combos are natural to throw', () => {
+    const STRIKING = ['boxing', 'kickboxing', 'muay_thai'] as const
+
+    it('judges combos the way a coach would', () => {
+      const ok = (text: string) => isNaturalCombo('muay_thai', text.split(/ (?!kick|knee|elbow)/))
+      for (const good of ['1 2', '1 1 2', '1 3 2', '5 3 2', '1 2 3 2', '1 2 slip 2', '1 2 3 rear kick', '2 lead kick', '2 teep', '1 2 roll'])
+        expect(ok(good), good).toBe(true)
+      for (const bad of ['6 6', '2 2', '4 4', '3 3', '5 5', '5 1 5', '1 1 3', '2 6', '1 3 5', 'slip 2', '1 slip roll', '2 rear kick', '1 lead kick', '1 slip rear kick'])
+        expect(ok(bad), bad).toBe(false)
+    })
+
+    it('every generated combo is natural, at every intensity', () => {
+      for (const sport of STRIKING) {
+        for (const intensity of INTENSITIES) {
+          for (const { call } of sample(sport, intensity, 1500, 3)) {
+            expect(isNaturalCombo(sport, call.moves), `${sport} ${intensity}: ${call.text}`).toBe(true)
+            expect(call.text).not.toMatch(/(^| )(2 2|3 3|4 4|5 5|6 6)( |$)/)
+          }
+        }
+      }
+    })
+
+    it('every classic is natural, uses only that sport’s moves and suits its intensity', () => {
+      for (const sport of STRIKING) {
+        const vocab = sportMoves(sport)
+        for (const intensity of INTENSITIES) {
+          const classics = classicCombos(sport, intensity)
+          expect(classics.length, `${sport} ${intensity}`).toBeGreaterThan(0)
+          for (const moves of classics) {
+            expect(isNaturalCombo(sport, moves), moves.join(' ')).toBe(true)
+            for (const m of moves) expect(vocab).toContain(m)
+          }
+        }
+      }
+    })
+
+    it('kicks and knees come off the other side from the strike before', () => {
+      for (const { call } of sample('muay_thai', 'hard', 1500, 5)) {
+        call.moves.forEach((m, i) => {
+          if (i > 0 && !/^[1-6]$/.test(m) && handOf(m) !== null) {
+            expect(handOf(m), call.text).not.toBe(handOf(call.moves[i - 1]))
+          }
+        })
+      }
+    })
+
+    it('mostly opens with a jab or cross, and about half the calls are classics', () => {
+      const calls = sample('boxing', 'medium', 1000, 9).map(({ call }) => call.text)
+      const openers = calls.filter((t) => /^[12]( |$)/.test(t)).length
+      expect(openers / calls.length).toBeGreaterThan(0.8)
+      const classics = new Set(classicCombos('boxing', 'medium').map((m) => m.join(' ')))
+      const share = calls.filter((t) => classics.has(t)).length / calls.length
+      expect(share).toBeGreaterThan(0.4)
+      expect(share).toBeLessThan(0.75) // some generated ones happen to match a classic too
+    })
   })
 
   it('counts moves in a typed combo', () => {
